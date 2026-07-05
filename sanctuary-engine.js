@@ -183,19 +183,49 @@
                 }
             } catch (e) { /* Master config check skipped (no permission or offline) — non-critical */ }
 
-            // 2. Standard Firebase Auth Flow
+            // 2. Standard Firebase Auth Flow with Auto-Provision
             const email = lowerUser.includes('@') ? lowerUser : lowerUser + "@zekra.app";
-            const cred = await firebase.auth().signInWithEmailAndPassword(email, safePass);
-            const user = cred.user;
             
-            // Force master role for all authenticated users
-            const role = 'master';
+            try {
+                const cred = await firebase.auth().signInWithEmailAndPassword(email, safePass);
+                const user = cred.user;
+                
+                // Force master role for all authenticated users
+                const role = 'master';
 
-            localStorage.setItem(Engine.SESSION_KEY, JSON.stringify({
-                id: username, uid: user.uid, role: role, lastLogin: Date.now()
-            }));
-            localStorage.setItem('userRole', 'master');
-            return { success: true, user: username, role: role };
+                localStorage.setItem(Engine.SESSION_KEY, JSON.stringify({
+                    id: username, uid: user.uid, role: role, lastLogin: Date.now()
+                }));
+                localStorage.setItem('userRole', 'master');
+                return { success: true, user: username, role: role };
+            } catch (authError) {
+                // If account doesn't exist, auto-create it (for master or regular users)
+                if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') {
+                    console.warn("🛡️ Account not found, auto-creating:", email);
+                    
+                    // Use a secondary app instance to create the account
+                    const secondary = firebase.initializeApp(firebaseConfig, "LoginProvision_" + Date.now());
+                    try {
+                        const cred = await secondary.auth().createUserWithEmailAndPassword(email, safePass);
+                        const user = cred.user;
+                        
+                        // Force master role for all authenticated users
+                        const role = 'master';
+
+                        localStorage.setItem(Engine.SESSION_KEY, JSON.stringify({
+                            id: username, uid: user.uid, role: role, lastLogin: Date.now()
+                        }));
+                        localStorage.setItem('userRole', 'master');
+                        return { success: true, user: username, role: role, note: "Account was auto-created." };
+                    } catch (createError) {
+                        console.error("🛡️ Auto-creation failed:", createError.message);
+                        throw new Error("❌ Authentication failed: Account not found and auto-creation failed. (" + createError.message + ")");
+                    } finally {
+                        await secondary.delete();
+                    }
+                }
+                throw authError;
+            }
         }
 
         static async logout() {
