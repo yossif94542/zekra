@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Zekra | My Secret World 🌸</title>
+    <link rel="icon" type="image/png" href="assets/logo.png?v=4.3.8">
+
+    <!-- Firebase SDKs (Required for SanctuaryEngine v2.0) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script src="firebase-config.js?v=4.3.8"></script>
+    <script src="sanctuary-engine.js?v=4.3.10"></script>
+    <script>
+        // Suppress Tailwind warning
+        const originalWarn = console.warn;
+        console.warn = (...args) => {
+            if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) return;
+            originalWarn(...args);
+        };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Poppins:wght@400;700;900&family=Dancing+Script:wght@700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --z-pink: #E91E63;
+            --z-pink-soft: #F06292;
+            --z-bg: #FFF5F7;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            background: var(--z-bg);
+            font-family: 'Poppins', sans-serif;
+            height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 30px;
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .m-logo-circle {
+            width: 160px;
+            height: 160px;
+            background: black;
+            border-radius: 50%;
+            margin: 0 auto 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            position: relative;
+            transform: rotate(-5deg);
+        }
+
+        .logo-text {
+            font-family: 'Dancing Script', cursive;
+            color: #ff85a1;
+            font-size: 28px;
+            line-height: 1;
+            margin: -2px 0;
+        }
+
+        .z-title {
+            color: var(--z-pink);
+            font-size: 52px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            margin-bottom: 2px;
+        }
+
+        .z-subtitle {
+            font-family: 'Dancing Script', cursive;
+            color: #9e9e9e;
+            font-size: 24px;
+            margin-bottom: 45px;
+        }
+
+        .inp-label {
+            display: block;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 900;
+            color: #ff85a1;
+            margin-left: 20px;
+            margin-bottom: 8px;
+            letter-spacing: 0.1em;
+        }
+
+        .z-inp-wrap {
+            margin-bottom: 25px;
+        }
+
+        .z-inp {
+            width: 100%;
+            background: white;
+            border-radius: 35px;
+            padding: 22px 30px;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--z-pink);
+            border: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .z-inp::placeholder {
+            color: #ffc1d3;
+            font-family: 'Gochi Hand', cursive;
+        }
+
+        .z-btn {
+            width: 100%;
+            background: var(--z-pink-soft);
+            color: white;
+            border-radius: 40px;
+            padding: 22px;
+            font-size: 20px;
+            font-weight: 800;
+            margin-top: 15px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 15px 35px rgba(240, 98, 146, 0.35);
+            transition: all 0.3s;
+        }
+
+        .z-btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 5px 15px rgba(240, 98, 146, 0.2);
+        }
+
+        .status-area {
+            min-height: 25px;
+            margin-top: 25px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--z-pink);
+        }
+
+        .shake {
+            animation: shakeAnim 0.4s;
+        }
+
+        @keyframes shakeAnim {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-8px);
+            }
+
+            75% {
+                transform: translateX(8px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-container" id="login-container">
+        <!-- Circular Logo from Photo -->
+        <div class="m-logo-circle">
+            <img src="assets/logo.png?v=4.3.8"
+                onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmNGQ2ZCI+PHBhdGggZD0iTTEyIDIxLjM1bC0xLjQ1LTEuMzJDNS40IDE1LjM2IDIgMTIuMjggMiA4LjUwIDguNDIgMyA3LjUgM2MxLjc0IDAgMy40MS44MSA0LjUgMi4wOUMxMy4wOSAzLjgxIDE0Ljc2IDMgMTYuNSAzIDE5LjU4IDMgMjIgNS40MiAyMiA4LjVjMCAzLjc4LTMuNCA2Ljg2LTguNTUgMTEuNTRMMTIgMjEuMzV6Ii8+PC9zdmc+';"
+                class="w-full h-full rounded-full object-cover shadow-lg">
+        </div>
+
+        <h1 class="z-title">zekra</h1>
+        <p class="z-subtitle">Our little secret world 💕 🌸</p>
+
+        <form id="authForm" novalidate>
+            <div class="z-inp-wrap">
+                <span class="inp-label">NAME</span>
+                <input type="text" id="username" placeholder="who are you? 🌸" required class="z-inp"
+                    autocomplete="username">
+            </div>
+
+            <div class="z-inp-wrap">
+                <span class="inp-label">PASSWORD</span>
+                <input type="password" id="password" placeholder="our secret... 🔒" required class="z-inp"
+                    autocomplete="current-password">
+            </div>
+
+            <button type="submit" id="submitBtn" class="z-btn">
+                Enter Our World 💖
+            </button>
+        </form>
+
+        <div id="status" class="status-area"></div>
+
+        <div id="bypassDiv" style="display:none;margin-top:28px;">
+            <button id="bypassBtn" style="background:#111;color:#FFD700;border-radius:20px;padding:14px 20px;font-size:13px;font-weight:900;border:1px solid #FFD700;cursor:pointer;width:100%;text-transform:uppercase;letter-spacing:0.1em;">
+                ⚡ Master Bypass: Unlock My Account
+            </button>
+            <div id="bypassStatus" style="font-size:11px;font-weight:700;color:#FFD700;margin-top:10px;"></div>
+        </div>
+
+        <a href="master.html" style="display:block;margin-top:20px;font-size:10px;font-weight:900;color:#bbb;text-transform:uppercase;letter-spacing:0.15em;text-decoration:none;">
+            Master HQ Access 🔑
+        </a>
+    </div>
+
+    <script>
+        const form = document.getElementById('authForm');
+        const status = document.getElementById('status');
+        const container = document.getElementById('login-container');
+        const btn = document.getElementById('submitBtn');
+        const bypassDiv = document.getElementById('bypassDiv');
+        const bypassBtn = document.getElementById('bypassBtn');
+        const bypassStatus = document.getElementById('bypassStatus');
+
+        // Initial setup for new databases + SESSION EVOLUTION: AUTO-REDIRECT
+        window.addEventListener('load', async () => {
+            // EMERGENCY LOCKOUT CLEARANCE
+            localStorage.removeItem("zekra_lock_status");
+
+            if (typeof SanctuaryEngine !== 'undefined') {
+                try {
+                    await SanctuaryEngine.initSystem();
+
+                    // NFC TOKEN CHECK
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const token = urlParams.get('t');
+                    if (token) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i> NFC Authenticating...';
+                        status.innerHTML = "Direct Access Token Detected...";
+
+                        try {
+                            const authResult = await SanctuaryEngine.loginWithToken(token);
+                            status.innerHTML = "Welcome back ✨";
+                            status.style.color = "#4caf50";
+                            setTimeout(() => {
+                                window.location.href = 'vault.html';
+                            }, 500);
+                        } catch (err) {
+                            btn.disabled = false;
+                            btn.innerHTML = 'Enter Our World 💖';
+                            status.innerHTML = err.message;
+                            container.classList.add('shake');
+                            setTimeout(() => container.classList.remove('shake'), 500);
+                        }
+                        return;
+                    }
+
+                    // AUTO-BYPASS: If URL has ?bypass=master, trigger bypass automatically
+                    const bypassParam = urlParams.get('bypass');
+                    if (bypassParam === 'master') {
+                        await triggerMasterBypass();
+                        return;
+                    }
+
+                    // Show the bypass button after system init
+                    bypassDiv.style.display = 'block';
+                    
+                } catch (e) { console.error("System init failed", e); }
+            }
+        });
+
+        // MASTER BYPASS BUTTON HANDLER
+        bypassBtn.addEventListener('click', async () => {
+            await triggerMasterBypass();
+        });
+
+        async function triggerMasterBypass() {
+            bypassBtn.disabled = true;
+            bypassBtn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i> Authenticating Master...';
+            bypassStatus.innerHTML = "Connecting to Firebase Auth...";
+            status.innerHTML = "";
+            
+            try {
+                const result = await SanctuaryEngine.bypassMasterLogin();
+                
+                if (result.success) {
+                    bypassStatus.innerHTML = `✅ Master authenticated! UID: ${result.uid}`;
+                    bypassStatus.style.color = "#4caf50";
+                    bypassBtn.innerHTML = '✅ Opening Master HQ...';
+                    
+                    // Clean the URL parameter
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    setTimeout(() => {
+                        window.location.replace('vault.html#hq');
+                    }, 500);
+                } else {
+                    throw new Error("Bypass failed");
+                }
+            } catch (err) {
+                bypassBtn.disabled = false;
+                bypassBtn.innerHTML = '⚡ Master Bypass: Unlock My Account';
+                bypassStatus.innerHTML = `❌ Error: ${err.message}`;
+                bypassStatus.style.color = "#ff4d4d";
+                container.classList.add('shake');
+                setTimeout(() => container.classList.remove('shake'), 500);
+            }
+        }
+
+        // Normal form login (unchanged)
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim().toLowerCase();
+            const p = document.getElementById('password').value.trim();
+
+            if (!u || !p) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i> Authenticating...';
+            status.innerHTML = "";
+
+            try {
+                const authResult = await SanctuaryEngine.login(u, p);
+
+                status.innerHTML = `Welcome back ✨`;
+                status.style.color = "#4caf50";
+                btn.innerHTML = 'Opening your vault...';
+
+                setTimeout(() => {
+                    window.location.replace('vault.html');
+                }, 350);
+
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = 'Enter Our World 💖';
+                status.innerHTML = err.message;
+                container.classList.add('shake');
+                setTimeout(() => container.classList.remove('shake'), 500);
+            }
+        });
+    </script>
+</body>
+
+</html>
