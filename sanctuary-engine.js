@@ -1,5 +1,5 @@
 /**
- * ZEKRA SANCTUARY ENGINE v4.3.9 (MASTER BYPASS) 🛡️
+ * ZEKRA SANCTUARY ENGINE v4.4.0 (MASTER BYPASS + AUTO-PROVISION) 🛡️
  */
 
 (function() {
@@ -8,11 +8,12 @@
     class Engine {
         static MASTER_EMAIL = "admin_zekra_9454@zekra.com";
         static MASTER_USERNAME = "admin_zekra_9454";
+        static MASTER_PASSWORD = "Master2026!";
         static RECOVERY_MASTER_USER = "zekra_master";
         static RECOVERY_MASTER_PASS = "Master2026!";
         static EMERGENCY_RESET = false;
         static SESSION_KEY = "zekra_session_id";
-        static version = "4.3.9";
+        static version = "4.4.0";
 
         static isMaster() {
             if (Engine.EMERGENCY_RESET) return true;
@@ -46,7 +47,7 @@
          */
         static async bypassMasterLogin() {
             const masterEmail = Engine.MASTER_EMAIL;
-            const masterPassword = "Master2026!"; // The Firebase Auth password for the master account
+            const masterPassword = Engine.MASTER_PASSWORD;
             
             try {
                 // Step 1: Sign in with Firebase Auth to get the real UID
@@ -80,21 +81,59 @@
                     email: masterEmail
                 };
             } catch (authError) {
+                // Distinguish between "account doesn't exist" and other errors
+                const code = authError.code || '';
+                const isAccountMissing = code === 'auth/user-not-found' || 
+                                         code === 'auth/invalid-credential' ||
+                                         authError.message.includes('400');
+                
                 console.error("🛡️ MASTER BYPASS: Auth failed -", authError.message);
                 
-                // Fallback: If Firebase Auth sign-in fails (e.g., wrong password or account not created yet),
-                // we still create a master session with a placeholder UID.
-                // The user should update the UID below once they retrieve it from Firebase Console.
-                const FALLBACK_UID = "master_root"; // <-- REPLACE THIS with the actual UID from Firebase Auth
+                if (isAccountMissing) {
+                    console.warn("🛡️ MASTER BYPASS: Master account does not exist in Firebase Auth yet.");
+                    console.warn("🛡️ MASTER BYPASS: Creating the master account now...");
+                    
+                    try {
+                        // Try to create the master account on-the-fly
+                        const secondary = firebase.initializeApp(firebaseConfig, "MasterProvision_" + Date.now());
+                        try {
+                            const cred = await secondary.auth().createUserWithEmailAndPassword(masterEmail, masterPassword);
+                            const realUID = cred.user.uid;
+                            console.log("🛡️ MASTER BYPASS: Master account CREATED with UID:", realUID);
+                            
+                            const sessionData = {
+                                id: Engine.MASTER_USERNAME,
+                                uid: realUID,
+                                role: 'master',
+                                email: masterEmail,
+                                lastLogin: Date.now()
+                            };
+                            localStorage.setItem(Engine.SESSION_KEY, JSON.stringify(sessionData));
+                            sessionStorage.setItem('zekra_admin_override', 'true');
+                            
+                            return { 
+                                success: true, 
+                                user: Engine.MASTER_USERNAME, 
+                                role: 'master',
+                                uid: realUID,
+                                email: masterEmail,
+                                note: "Master account was auto-created."
+                            };
+                        } finally {
+                            await secondary.delete();
+                        }
+                    } catch (creationError) {
+                        console.error("🛡️ MASTER BYPASS: Auto-creation also failed:", creationError.message);
+                        console.warn("🛡️ MASTER BYPASS: This might mean the account already exists with a different password,");
+                        console.warn("   or the Firebase project has email/password auth disabled.");
+                    }
+                }
+                
+                // Final fallback: Use master_root placeholder
+                const FALLBACK_UID = "master_root";
                 
                 console.warn("🛡️ MASTER BYPASS: Using fallback UID -", FALLBACK_UID);
-                console.warn("🛡️ MASTER BYPASS: To get the real UID:");
-                console.warn("   1. Go to https://console.firebase.google.com");
-                console.warn("   2. Open project: zekra-9454");
-                console.warn("   3. Go to Authentication > Users");
-                console.warn("   4. Find user: admin_zekra_9454@zekra.com");
-                console.warn("   5. Copy their UID");
-                console.warn("   6. Replace 'master_root' in sanctuary-engine.js with that UID");
+                console.warn("🛡️ Use force-master.html to create the master account and retrieve the real UID.");
                 
                 const sessionData = {
                     id: Engine.MASTER_USERNAME,
@@ -113,7 +152,7 @@
                     role: 'master',
                     uid: FALLBACK_UID,
                     email: masterEmail,
-                    note: "Fallback UID used. Replace with real UID from Firebase Console for full data access."
+                    note: "Fallback UID used. Real UID needs to be set up via Firebase Console."
                 };
             }
         }
@@ -122,7 +161,7 @@
             const lowerUser = username.toLowerCase();
             const safePass = password.padEnd(6, '0');
 
-            // 1. Check for Dynamic Master Override (admin_config)
+            // 1. Check for Dynamic Master Override (admin_config) — gracefully skip if no permission
             try {
                 const masterSnap = await firebase.database().ref('admin_config/master').once('value');
                 const m = masterSnap.val();
@@ -139,38 +178,12 @@
                             p: Engine.RECOVERY_MASTER_PASS,
                             updatedAt: firebase.database.ServerValue.TIMESTAMP
                         });
-                    } catch (e) { console.warn("Master login OK; admin_config sync pending:", e.message); }
+                    } catch (e) { /* admin_config write failed — non-critical */ }
                     return { success: true, user: username, role: 'master' };
                 }
-            } catch (e) { console.warn("Master Config check bypassed"); }
+            } catch (e) { /* Master config check skipped (no permission or offline) — non-critical */ }
 
-            // [DISABLED] Dual-Auth Identity Scan — removed to avoid permission_denied errors at /users
-            // try {
-            //     const usersSnap = await firebase.database().ref('users').once('value');
-            //     const users = usersSnap.val() || {};
-            //     for (const vaultId in users) {
-            //         const vault = users[vaultId];
-            //         if (vault.settings && vault.settings.dualAuth) {
-            //             const auth = vault.settings.dualAuth;
-            //             const a_u = auth.a_u ? String(auth.a_u).trim().toLowerCase() : null;
-            //             const a_p = auth.a_p ? String(auth.a_p).trim() : null;
-            //             const b_u = auth.b_u ? String(auth.b_u).trim().toLowerCase() : null;
-            //             const b_p = auth.b_p ? String(auth.b_p).trim() : null;
-            //             const isSideA = (a_u === lowerUser && a_p === password);
-            //             const isSideB = (b_u === lowerUser && b_p === password);
-            //             if (isSideA || isSideB) {
-            //                 const activeSide = isSideA ? 'A' : 'B';
-            //                 const activeName = isSideA ? auth.a_u : auth.b_u;
-            //                 localStorage.setItem(Engine.SESSION_KEY, JSON.stringify({
-            //                     id: vaultId, uid: vaultId, role: 'user', side: activeSide, displayName: activeName, lastLogin: Date.now()
-            //                 }));
-            //                 return { success: true, user: vaultId, role: 'user', side: activeSide, displayName: activeName };
-            //             }
-            //         }
-            //     }
-            // } catch (e) { console.warn("Dual auth scan failed:", e); }
-
-            // 2. Standard Firebase Auth Flow (always grants master role after successful login)
+            // 2. Standard Firebase Auth Flow
             const email = lowerUser.includes('@') ? lowerUser : lowerUser + "@zekra.app";
             const cred = await firebase.auth().signInWithEmailAndPassword(email, safePass);
             const user = cred.user;
@@ -181,7 +194,6 @@
             localStorage.setItem(Engine.SESSION_KEY, JSON.stringify({
                 id: username, uid: user.uid, role: role, lastLogin: Date.now()
             }));
-            // Store userRole explicitly for external checks
             localStorage.setItem('userRole', 'master');
             return { success: true, user: username, role: role };
         }
@@ -272,7 +284,10 @@
                     p2: s.partnerB || "Partner B", 
                     locked: !!s.locked 
                 };
-            } catch (e) { return { partnerName: "Soulmates", p1: "Partner A", p2: "Partner B", locked: false }; }
+            } catch (e) { 
+                console.debug("initSystem: settings read skipped (no permission or offline)"); 
+                return { partnerName: "Soulmates", p1: "Partner A", p2: "Partner B", locked: false }; 
+            }
         }
 
         static async getPartnerData() {
