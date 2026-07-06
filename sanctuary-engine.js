@@ -234,12 +234,12 @@
                 const cred = await firebase.auth().signInWithEmailAndPassword(email, safePass);
                 const user = cred.user;
                 
-                const role = 'master';
+                const role = 'user';
 
                 localStorage.setItem(Engine.SESSION_KEY, JSON.stringify({
                     id: username, uid: user.uid, role: role, lastLogin: Date.now()
                 }));
-                localStorage.setItem('userRole', 'master');
+                localStorage.setItem('userRole', 'user');
                 return { success: true, user: username, role: role };
             } catch (authError) {
                 // If account doesn't exist, auto-create it
@@ -251,12 +251,12 @@
                         const cred = await secondary.auth().createUserWithEmailAndPassword(email, safePass);
                         const user = cred.user;
                         
-                        const role = 'master';
+                        const role = 'user';
 
                         localStorage.setItem(Engine.SESSION_KEY, JSON.stringify({
                             id: username, uid: user.uid, role: role, lastLogin: Date.now()
                         }));
-                        localStorage.setItem('userRole', 'master');
+                        localStorage.setItem('userRole', 'user');
                         return { success: true, user: username, role: role, note: "Account was auto-created." };
                     } catch (createError) {
                         console.error("🛡️ Auto-creation failed:", createError.message);
