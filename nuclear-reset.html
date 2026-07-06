@@ -249,29 +249,16 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script src="firebase-config.js?v=4.4.0"></script>
-    <script src="sanctuary-engine.js?v=4.4.0"></script>
-
     <script>
         (function() {
-            const MASTER_EMAIL = "admin_zekra_9454@zekra.com";
-            const MASTER_USERNAME = "admin_zekra_9454";
-            const MASTER_PASSWORD = "Master2026!";
-            const SESSION_KEY = "zekra_session_id";
-
-            const authBtn = document.getElementById('authBtn');
             const nukeBtn = document.getElementById('nukeBtn');
             const setupBtn = document.getElementById('setupBtn');
             const statusEl = document.getElementById('status');
             const statusDisplay = document.getElementById('statusDisplay');
-            const sessionDisplay = document.getElementById('sessionDisplay');
             const logBox = document.getElementById('logBox');
             const progressBar = document.getElementById('progressBar');
             const progressFill = document.getElementById('progressFill');
 
-            let masterSession = null;
-            let realUID = null;
-
-            // ── Logging ──
             function log(msg, type = 'info') {
                 logBox.classList.remove('hidden');
                 const entry = document.createElement('div');
@@ -296,24 +283,15 @@
 
             function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-            // ── Step 1: Authenticate as Master ──
-            async function authenticateMaster() {
-                authBtn.disabled = true;
-                authBtn.textContent = '⏳ Authenticating...';
-                setStatus('Starting master authentication...', 'info');
-                log('Initiating master bypass authentication...', 'info');
-                setProgress(10);
+            async function nukeEverything() {
+                nukeBtn.disabled = true;
+                nukeBtn.textContent = '☢️ WIPING...';
+                setStatus('🔥 Initiating nuclear wipe...', 'warning');
+                log('========================================', 'info');
+                log('☢️ NUCLEAR RESET SEQUENCE ACTIVATED', 'warning');
+                log('========================================', 'info');
+                setProgress(20);
 
-                // Wait for Firebase & Engine
-                if (typeof SanctuaryEngine === 'undefined') {
-                    setStatus('❌ SanctuaryEngine not loaded', 'error');
-                    log('SanctuaryEngine failed to load', 'error');
-                    authBtn.disabled = false;
-                    authBtn.textContent = '🔑 1. Authenticate as Master';
-                    return;
-                }
-
-                // Wait for Firebase init
                 let attempts = 0;
                 while (!firebase.apps.length && attempts < 30) {
                     await sleep(500);
@@ -322,91 +300,13 @@
                 if (!firebase.apps.length) {
                     setStatus('❌ Firebase failed to initialize', 'error');
                     log('Firebase not initialized after 15s', 'error');
-                    authBtn.disabled = false;
-                    authBtn.textContent = '🔑 1. Authenticate as Master';
+                    nukeBtn.disabled = false;
+                    nukeBtn.textContent = '☢️ Nuke Everything';
                     return;
                 }
                 log('Firebase initialized successfully', 'success');
-                setProgress(20);
+                setProgress(30);
 
-                // Try bypass master login
-                setStatus('Attempting master bypass...', 'info');
-                log('Calling SanctuaryEngine.bypassMasterLogin()...', 'info');
-                
-                try {
-                    const result = await SanctuaryEngine.bypassMasterLogin();
-                    log(`Bypass result: success=${result.success}, uid=${result.uid}`, result.success ? 'success' : 'warning');
-                    
-                    if (!result.success) {
-                        throw new Error('Bypass returned success=false');
-                    }
-                    
-                    masterSession = result;
-                    realUID = result.uid;
-                    
-                    setProgress(40);
-                    setStatus(`✅ Authenticated! UID: ${realUID}`, 'success');
-                    log(`Master session established with UID: ${realUID}`, 'success');
-                    sessionDisplay.textContent = '✅ ACTIVE';
-                    sessionDisplay.className = 'val success';
-                    
-                    // Enable nuke button
-                    nukeBtn.classList.remove('hidden');
-                    authBtn.textContent = '✅ Authenticated';
-                    authBtn.style.background = '#4ade80';
-                    
-                } catch (err) {
-                    log(`Bypass failed: ${err.message}`, 'error');
-                    setStatus(`❌ Auth error: ${err.message}`, 'error');
-                    
-                    // Fallback: try force-injecting session manually
-                    log('Attempting manual session injection fallback...', 'warning');
-                    try {
-                        const fallbackUID = "master_root";
-                        const sessionData = {
-                            id: MASTER_USERNAME,
-                            uid: fallbackUID,
-                            role: 'master',
-                            email: MASTER_EMAIL,
-                            lastLogin: Date.now()
-                        };
-                        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-                        sessionStorage.setItem('zekra_admin_override', 'true');
-                        localStorage.removeItem('zekra_lock_status');
-                        
-                        masterSession = sessionData;
-                        realUID = fallbackUID;
-                        
-                        log('Manual fallback session injected with UID: ' + fallbackUID, 'success');
-                        setProgress(40);
-                        setStatus('⚠️ Fallback session injected (UID: master_root)', 'warning');
-                        sessionDisplay.textContent = '⚠️ FALLBACK';
-                        sessionDisplay.className = 'val warning';
-                        
-                        nukeBtn.classList.remove('hidden');
-                        authBtn.textContent = '✅ Fallback Active';
-                    } catch (fallbackErr) {
-                        log(`Fallback also failed: ${fallbackErr.message}`, 'error');
-                        setStatus('❌ All auth methods failed', 'error');
-                        authBtn.disabled = false;
-                        authBtn.textContent = '🔑 1. Authenticate as Master';
-                        return;
-                    }
-                }
-            }
-
-            // ── Step 2: Nuke Everything ──
-            async function nukeEverything() {
-                nukeBtn.disabled = true;
-                nukeBtn.textContent = '☢️ WIPING...';
-                setStatus('🔥 Initiating nuclear wipe...', 'warning');
-                log('========================================', 'info');
-                log('☢️ NUCLEAR RESET SEQUENCE ACTIVATED', 'warning');
-                log('========================================', 'info');
-                setProgress(50);
-                await sleep(500);
-
-                // ── 2A: Wipe admin_config ──
                 try {
                     log('Wiping admin_config...', 'info');
                     await firebase.database().ref('admin_config').set(null);
@@ -414,9 +314,8 @@
                 } catch (e) {
                     log(`admin_config wipe: ${e.message}`, 'warning');
                 }
-                setProgress(60);
+                setProgress(45);
 
-                // ── 2B: Wipe users node ──
                 try {
                     log('Wiping all users data...', 'info');
                     await firebase.database().ref('users').set(null);
@@ -424,9 +323,8 @@
                 } catch (e) {
                     log(`users wipe: ${e.message}`, 'warning');
                 }
-                setProgress(70);
+                setProgress(60);
 
-                // ── 2C: Wipe master_logs ──
                 try {
                     log('Wiping master_logs...', 'info');
                     await firebase.database().ref('master_logs').set(null);
@@ -436,7 +334,6 @@
                 }
                 setProgress(75);
 
-                // ── 2D: Wipe presence ──
                 try {
                     log('Wiping presence data...', 'info');
                     await firebase.database().ref('presence').set(null);
@@ -444,43 +341,8 @@
                 } catch (e) {
                     log(`presence wipe: ${e.message}`, 'warning');
                 }
-                setProgress(80);
+                setProgress(85);
 
-                // ── 2E: Delete Firebase Auth accounts ──
-                log('Attempting to delete Firebase Auth accounts...', 'info');
-                try {
-                    if (firebase.auth().currentUser) {
-                        const user = firebase.auth().currentUser;
-                        log(`Current auth user: ${user.uid}`, 'info');
-                        try {
-                            await user.delete();
-                            log('✅ Master auth account deleted', 'success');
-                        } catch (deleteErr) {
-                            log(`Master auth delete failed (may need reauth): ${deleteErr.message}`, 'warning');
-                            try {
-                                const cred = await firebase.auth().signInWithEmailAndPassword(MASTER_EMAIL, MASTER_PASSWORD);
-                                await cred.user.delete();
-                                log('✅ Master auth account deleted after reauth', 'success');
-                            } catch (reauthErr) {
-                                log(`Reauth+delete failed: ${reauthErr.message}`, 'warning');
-                                log('Skipping Auth deletion — will be handled by setup', 'info');
-                            }
-                        }
-                    } else {
-                        try {
-                            const cred = await firebase.auth().signInWithEmailAndPassword(MASTER_EMAIL, MASTER_PASSWORD);
-                            await cred.user.delete();
-                            log('✅ Master auth account deleted', 'success');
-                        } catch (signinErr) {
-                            log(`Auth sign-in failed (account may not exist): ${signinErr.message}`, 'warning');
-                        }
-                    }
-                } catch (e) {
-                    log(`Auth deletion error: ${e.message}`, 'warning');
-                }
-                setProgress(90);
-
-                // ── 2F: Clear all local storage ──
                 log('Clearing local storage...', 'info');
                 try {
                     localStorage.clear();
@@ -489,58 +351,37 @@
                 } catch (e) {
                     log(`localStorage clear: ${e.message}`, 'warning');
                 }
-
                 setProgress(95);
+
                 await sleep(300);
 
-                // ── Done ──
                 log('========================================', 'info');
                 log('✅ NUCLEAR RESET COMPLETE', 'success');
                 log('========================================', 'info');
                 setProgress(100);
                 setStatus('✅ Database fully wiped! Ready for fresh setup.', 'success');
                 nukeBtn.textContent = '☢️ Done';
-                
-                // Show setup button
                 setupBtn.classList.remove('hidden');
-                
-                // Auto-redirect after 3 seconds
+
                 setTimeout(() => {
                     log('Redirecting to setup-master.html...', 'info');
                     window.location.href = 'setup-master.html?auto=1';
                 }, 3000);
             }
 
-            // ── Step 3: Go to setup ──
-            function goToSetup() {
-                window.location.href = 'setup-master.html?auto=1';
-            }
-
-            // ── Wire up buttons ──
-            authBtn.addEventListener('click', authenticateMaster);
             nukeBtn.addEventListener('click', nukeEverything);
-            setupBtn.addEventListener('click', goToSetup);
+            setupBtn.addEventListener('click', () => {
+                window.location.href = 'setup-master.html?auto=1';
+            });
 
-            // ── Auto-execute if ?auto param ──
             window.addEventListener('load', () => {
                 const params = new URLSearchParams(window.location.search);
-                if (params.get('auto') === '1' || params.get('auto') === 'true') {
-                    setTimeout(() => {
-                        authenticateMaster().then(() => {
-                            if (params.get('nuke') === '1') {
-                                setTimeout(() => nukeEverything(), 1000);
-                            }
-                        });
-                    }, 1000);
+                if (params.get('auto') === '1') {
+                    setTimeout(() => nukeEverything(), 1000);
                 }
             });
 
-            // Expose for debugging
-            window.__nuclearReset = {
-                authenticateMaster,
-                nukeEverything,
-                goToSetup
-            };
+            window.__nuclearReset = { nukeEverything };
         })();
     </script>
 </body>
