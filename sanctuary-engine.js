@@ -11,6 +11,26 @@
         static MASTER_PASSWORD = "Master2026!";
         static RECOVERY_MASTER_USER = "zekra_master";
         static RECOVERY_MASTER_PASS = "Master2026!";
+        
+        /**
+         * سحب بيانات الماستر من قاعدة البيانات بدلاً من القيم الثابتة
+         * عشان لو غيرت الباسورد من إعدادات الماستر يضبط
+         */
+        static async loadMasterConfig() {
+            try {
+                const snap = await firebase.database().ref('admin_config/master').once('value');
+                const m = snap.val();
+                if (m && m.u && m.p) {
+                    Engine.MASTER_USERNAME = m.u;
+                    Engine.MASTER_PASSWORD = m.p;
+                    Engine.RECOVERY_MASTER_USER = m.u;
+                    Engine.RECOVERY_MASTER_PASS = m.p;
+                    console.log("🛡️ Master config loaded from DB:", m.u);
+                }
+            } catch (e) {
+                console.debug("🛡️ Using default master config (DB not available)");
+            }
+        }
         static EMERGENCY_RESET = false;
         static SESSION_KEY = "zekra_session_id";
         static version = "4.4.0";
@@ -46,6 +66,8 @@
          * This bypasses the normal login flow and hardcodes the master session.
          */
         static async bypassMasterLogin() {
+            // Load latest config from DB first
+            await Engine.loadMasterConfig();
             const masterEmail = Engine.MASTER_EMAIL;
             const masterPassword = Engine.MASTER_PASSWORD;
             

@@ -1,6 +1,55 @@
 {
   "rules": {
-    ".read": true,
-    ".write": true
+    ".read": "auth != null",
+    ".write": "auth != null",
+    
+    "admin_config": {
+      ".read": true,
+      ".write": "auth != null",
+      "master": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    },
+    
+    "admin_recovery": {
+      ".read": true,
+      ".write": true
+    },
+    
+    "users": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "settings": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "cards": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "data": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    },
+    
+    "presence": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    
+    "master_logs": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
   }
 }
