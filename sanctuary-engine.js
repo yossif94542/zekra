@@ -183,7 +183,13 @@
                 }
             } catch (e) { /* Master config check skipped (no permission or offline) — non-critical */ }
 
-            // 2. Standard Firebase Auth Flow with Auto-Provision
+            // 2. If this is the master account, use the proven bypass logic
+            if (lowerUser === Engine.MASTER_USERNAME.toLowerCase() || lowerUser === Engine.MASTER_EMAIL.toLowerCase()) {
+                console.log("🛡️ Master account detected, using bypass login flow");
+                return await Engine.bypassMasterLogin();
+            }
+
+            // 3. Standard Firebase Auth Flow with Auto-Provision for regular users
             const email = lowerUser.includes('@') ? lowerUser : lowerUser + "@zekra.app";
             
             try {
@@ -199,17 +205,15 @@
                 localStorage.setItem('userRole', 'master');
                 return { success: true, user: username, role: role };
             } catch (authError) {
-                // If account doesn't exist, auto-create it (for master or regular users)
+                // If account doesn't exist, auto-create it
                 if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') {
                     console.warn("🛡️ Account not found, auto-creating:", email);
                     
-                    // Use a secondary app instance to create the account
                     const secondary = firebase.initializeApp(firebaseConfig, "LoginProvision_" + Date.now());
                     try {
                         const cred = await secondary.auth().createUserWithEmailAndPassword(email, safePass);
                         const user = cred.user;
                         
-                        // Force master role for all authenticated users
                         const role = 'master';
 
                         localStorage.setItem(Engine.SESSION_KEY, JSON.stringify({
