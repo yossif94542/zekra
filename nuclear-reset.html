@@ -187,47 +187,31 @@
     <div class="container">
         <div class="icon">🔥</div>
         <h1>Nuclear Reset</h1>
-        <p class="sub">Full database wipe & factory reset — start completely fresh</p>
+        <p class="sub">Wipe all Firebase data & start fresh</p>
 
         <div class="warning-box">
             <div class="label">🔴 DESTRUCTIVE ACTION</div>
             <ul>
                 <li>All Firebase Realtime Database data will be <strong>permanently deleted</strong></li>
-                <li>All Firebase Auth accounts will be removed</li>
                 <li>All local sessions & cache will be cleared</li>
                 <li>Site design & pages will remain <strong>completely unchanged</strong></li>
-                <li>You will be redirected to setup a fresh master account</li>
+                <li>After wipe you will create a fresh master account</li>
             </ul>
         </div>
 
-        <div class="card" id="infoCard">
-            <div class="row">
-                <span class="key">Master Account</span>
-                <span class="val" id="emailDisplay">admin_zekra_9454@zekra.com</span>
-            </div>
+        <div class="card">
             <div class="row">
                 <span class="key">Status</span>
                 <span class="val" id="statusDisplay">⏳ Idle</span>
             </div>
-            <div class="row">
-                <span class="key">Session</span>
-                <span class="val" id="sessionDisplay">—</span>
-            </div>
         </div>
 
-        <!-- Step 1: Authenticate (Master Bypass) -->
-        <button class="btn btn-gold" id="authBtn">
-            🔑 1. Authenticate as Master
+        <button class="btn btn-danger" id="nukeBtn">
+            ☢️ NUKE EVERYTHING
         </button>
 
-        <!-- Step 2: Nuke (appears after auth) -->
-        <button class="btn btn-danger hidden" id="nukeBtn">
-            ☢️ 2. Nuke Everything
-        </button>
-
-        <!-- Step 3: Go to setup (appears after nuke) -->
         <button class="btn btn-secondary hidden" id="setupBtn">
-            ➡️ 3. Go to Master Setup
+            ➡️ Go to Master Setup
         </button>
 
         <div class="status" id="status"></div>
@@ -239,16 +223,14 @@
         <div class="log-box hidden" id="logBox"></div>
 
         <div class="footer-note">
-            ⚠️ This action cannot be undone — make sure you want a fresh start
+            ⚠️ Requires public database rules (.read: true, .write: true)
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <script src="firebase-config.js?v=4.4.0"></script>
+
     <script>
         (function() {
             const nukeBtn = document.getElementById('nukeBtn');
@@ -259,14 +241,13 @@
             const progressBar = document.getElementById('progressBar');
             const progressFill = document.getElementById('progressFill');
 
-            function log(msg, type = 'info') {
+            function log(msg, type) {
                 logBox.classList.remove('hidden');
                 const entry = document.createElement('div');
-                entry.className = 'log-' + type;
+                entry.className = 'log-' + (type || 'info');
                 entry.textContent = '> ' + msg;
                 logBox.appendChild(entry);
                 logBox.scrollTop = logBox.scrollHeight;
-                console.log(`[NUCLEAR:${type}] ${msg}`);
             }
 
             function setProgress(pct) {
@@ -274,25 +255,25 @@
                 progressFill.style.width = pct + '%';
             }
 
-            function setStatus(msg, type = 'info') {
+            function setStatus(msg, type) {
                 statusEl.textContent = msg;
-                statusEl.className = 'status ' + type;
+                statusEl.className = 'status ' + (type || 'info');
                 statusDisplay.textContent = msg;
                 statusDisplay.className = 'val ' + (type === 'success' ? 'success' : type === 'error' ? 'danger' : '');
             }
 
-            function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+            function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
             async function nukeEverything() {
                 nukeBtn.disabled = true;
                 nukeBtn.textContent = '☢️ WIPING...';
                 setStatus('🔥 Initiating nuclear wipe...', 'warning');
-                log('========================================', 'info');
+                log('========================================');
                 log('☢️ NUCLEAR RESET SEQUENCE ACTIVATED', 'warning');
-                log('========================================', 'info');
+                log('========================================');
                 setProgress(20);
 
-                let attempts = 0;
+                var attempts = 0;
                 while (!firebase.apps.length && attempts < 30) {
                     await sleep(500);
                     attempts++;
@@ -301,87 +282,80 @@
                     setStatus('❌ Firebase failed to initialize', 'error');
                     log('Firebase not initialized after 15s', 'error');
                     nukeBtn.disabled = false;
-                    nukeBtn.textContent = '☢️ Nuke Everything';
+                    nukeBtn.textContent = '☢️ NUKE EVERYTHING';
                     return;
                 }
                 log('Firebase initialized successfully', 'success');
                 setProgress(30);
 
                 try {
-                    log('Wiping admin_config...', 'info');
+                    log('Wiping admin_config...');
                     await firebase.database().ref('admin_config').set(null);
                     log('✅ admin_config deleted', 'success');
                 } catch (e) {
-                    log(`admin_config wipe: ${e.message}`, 'warning');
+                    log('admin_config: ' + e.message, 'warning');
                 }
                 setProgress(45);
 
                 try {
-                    log('Wiping all users data...', 'info');
+                    log('Wiping all users data...');
                     await firebase.database().ref('users').set(null);
                     log('✅ users node deleted', 'success');
                 } catch (e) {
-                    log(`users wipe: ${e.message}`, 'warning');
+                    log('users: ' + e.message, 'warning');
                 }
                 setProgress(60);
 
                 try {
-                    log('Wiping master_logs...', 'info');
+                    log('Wiping master_logs...');
                     await firebase.database().ref('master_logs').set(null);
                     log('✅ master_logs deleted', 'success');
                 } catch (e) {
-                    log(`master_logs wipe: ${e.message}`, 'warning');
+                    log('master_logs: ' + e.message, 'warning');
                 }
                 setProgress(75);
 
                 try {
-                    log('Wiping presence data...', 'info');
+                    log('Wiping presence data...');
                     await firebase.database().ref('presence').set(null);
                     log('✅ presence node deleted', 'success');
                 } catch (e) {
-                    log(`presence wipe: ${e.message}`, 'warning');
+                    log('presence: ' + e.message, 'warning');
                 }
                 setProgress(85);
 
-                log('Clearing local storage...', 'info');
+                log('Clearing local storage...');
                 try {
                     localStorage.clear();
                     sessionStorage.clear();
                     log('✅ All local storage cleared', 'success');
                 } catch (e) {
-                    log(`localStorage clear: ${e.message}`, 'warning');
+                    log('localStorage: ' + e.message, 'warning');
                 }
                 setProgress(95);
 
                 await sleep(300);
 
-                log('========================================', 'info');
+                log('========================================');
                 log('✅ NUCLEAR RESET COMPLETE', 'success');
-                log('========================================', 'info');
+                log('========================================');
                 setProgress(100);
                 setStatus('✅ Database fully wiped! Ready for fresh setup.', 'success');
                 nukeBtn.textContent = '☢️ Done';
                 setupBtn.classList.remove('hidden');
 
-                setTimeout(() => {
-                    log('Redirecting to setup-master.html...', 'info');
+                setTimeout(function() {
+                    log('Redirecting to setup-master.html...');
                     window.location.href = 'setup-master.html?auto=1';
                 }, 3000);
             }
 
             nukeBtn.addEventListener('click', nukeEverything);
-            setupBtn.addEventListener('click', () => {
+            setupBtn.addEventListener('click', function() {
                 window.location.href = 'setup-master.html?auto=1';
             });
 
-            window.addEventListener('load', () => {
-                const params = new URLSearchParams(window.location.search);
-                if (params.get('auto') === '1') {
-                    setTimeout(() => nukeEverything(), 1000);
-                }
-            });
-
-            window.__nuclearReset = { nukeEverything };
+            window.__nuclearReset = { nukeEverything: nukeEverything };
         })();
     </script>
 </body>
