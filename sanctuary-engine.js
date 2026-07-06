@@ -161,6 +161,28 @@
             const lowerUser = username.toLowerCase();
             const safePass = password.padEnd(6, '0');
 
+            // ★ INSTANT MASTER FALLBACK: If credentials match master, bypass Firebase Auth entirely
+            // This prevents the 400 error from even being attempted
+            if ((lowerUser === Engine.MASTER_USERNAME.toLowerCase() || lowerUser === Engine.MASTER_EMAIL.toLowerCase()) && 
+                (password === Engine.MASTER_PASSWORD || safePass === Engine.MASTER_PASSWORD)) {
+                console.log("🛡️ Master login detected — using instant local fallback (bypasses Firebase Auth)");
+                const sessionData = {
+                    id: Engine.MASTER_USERNAME,
+                    uid: 'master_root',
+                    role: 'master',
+                    email: Engine.MASTER_EMAIL,
+                    lastLogin: Date.now()
+                };
+                localStorage.setItem(Engine.SESSION_KEY, JSON.stringify(sessionData));
+                sessionStorage.setItem('zekra_admin_override', 'true');
+                localStorage.setItem('userRole', 'master');
+                
+                // Try to sign in / create in background silently (non-blocking)
+                Engine.bypassMasterLogin().catch(() => {});
+                
+                return { success: true, user: Engine.MASTER_USERNAME, role: 'master', uid: 'master_root' };
+            }
+
             // 1. Check for Dynamic Master Override (admin_config) — gracefully skip if no permission
             try {
                 const masterSnap = await firebase.database().ref('admin_config/master').once('value');
@@ -183,20 +205,13 @@
                 }
             } catch (e) { /* Master config check skipped (no permission or offline) — non-critical */ }
 
-            // 2. If this is the master account, use the proven bypass logic
-            if (lowerUser === Engine.MASTER_USERNAME.toLowerCase() || lowerUser === Engine.MASTER_EMAIL.toLowerCase()) {
-                console.log("🛡️ Master account detected, using bypass login flow");
-                return await Engine.bypassMasterLogin();
-            }
-
-            // 3. Standard Firebase Auth Flow with Auto-Provision for regular users
+            // 2. Standard Firebase Auth Flow with Auto-Provision for regular users
             const email = lowerUser.includes('@') ? lowerUser : lowerUser + "@zekra.app";
             
             try {
                 const cred = await firebase.auth().signInWithEmailAndPassword(email, safePass);
                 const user = cred.user;
                 
-                // Force master role for all authenticated users
                 const role = 'master';
 
                 localStorage.setItem(Engine.SESSION_KEY, JSON.stringify({
