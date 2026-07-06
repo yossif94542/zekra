@@ -33,6 +33,15 @@
       }
     },
     
+    "presence": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    
     "master_logs": {
       ".read": "auth != null",
       ".write": "auth != null"

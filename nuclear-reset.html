@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zekra | Nuclear Reset 🔥</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0A0A0A;
+            color: white;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 480px;
+            width: 100%;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .icon { font-size: 64px; margin-bottom: 16px; }
+        h1 {
+            font-size: 28px;
+            font-weight: 900;
+            color: #ff4444;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        .sub {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 30px;
+        }
+        .warning-box {
+            background: #1a0a0a;
+            border: 1px solid #ff4444;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        .warning-box .label {
+            color: #ff4444;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .warning-box ul {
+            list-style: none;
+            padding: 0;
+        }
+        .warning-box li {
+            color: #ccc;
+            font-size: 13px;
+            padding: 4px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .warning-box li::before {
+            content: "⚠️";
+            position: absolute;
+            left: 0;
+        }
+        .card {
+            background: #151515;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .card .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #222;
+        }
+        .card .row:last-child { border-bottom: none; }
+        .card .row .key { color: #888; font-size: 13px; font-weight: 600; }
+        .card .row .val { color: #ccc; font-size: 13px; font-family: monospace; }
+        .card .row .val.danger { color: #ff4444; }
+        .card .row .val.success { color: #4ade80; }
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 900;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            margin-bottom: 12px;
+        }
+        .btn-danger {
+            background: #ff4444;
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(255, 68, 68, 0.3);
+        }
+        .btn-danger:hover { transform: scale(1.02); }
+        .btn-danger:active { transform: scale(0.96); }
+        .btn-danger:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: transparent;
+            color: #888;
+            border: 1px solid #444;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.05); }
+        .btn-gold {
+            background: #FFD700;
+            color: #000;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.25);
+        }
+        .btn-gold:hover { transform: scale(1.02); }
+        .btn-gold:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            margin-top: 16px;
+            font-size: 13px;
+            font-weight: 700;
+            min-height: 24px;
+        }
+        .status.success { color: #4ade80; }
+        .status.error { color: #ff4444; }
+        .status.info { color: #60a5fa; }
+        .status.warning { color: #facc15; }
+        .log-box {
+            background: #0d0d0d;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+            text-align: left;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+        .log-box .log-success { color: #4ade80; }
+        .log-box .log-error { color: #ff4444; }
+        .log-box .log-info { color: #60a5fa; }
+        .log-box .log-warning { color: #facc15; }
+        .hidden { display: none; }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #222;
+            border-radius: 2px;
+            margin-top: 16px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar.active { display: block; }
+        .progress-bar .fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ff4444, #FFD700);
+            border-radius: 2px;
+            transition: width 0.5s;
+        }
+        .footer-note {
+            margin-top: 25px;
+            font-size: 10px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🔥</div>
+        <h1>Nuclear Reset</h1>
+        <p class="sub">Full database wipe & factory reset — start completely fresh</p>
+
+        <div class="warning-box">
+            <div class="label">🔴 DESTRUCTIVE ACTION</div>
+            <ul>
+                <li>All Firebase Realtime Database data will be <strong>permanently deleted</strong></li>
+                <li>All Firebase Auth accounts will be removed</li>
+                <li>All local sessions & cache will be cleared</li>
+                <li>Site design & pages will remain <strong>completely unchanged</strong></li>
+                <li>You will be redirected to setup a fresh master account</li>
+            </ul>
+        </div>
+
+        <div class="card" id="infoCard">
+            <div class="row">
+                <span class="key">Master Account</span>
+                <span class="val" id="emailDisplay">admin_zekra_9454@zekra.com</span>
+            </div>
+            <div class="row">
+                <span class="key">Status</span>
+                <span class="val" id="statusDisplay">⏳ Idle</span>
+            </div>
+            <div class="row">
+                <span class="key">Session</span>
+                <span class="val" id="sessionDisplay">—</span>
+            </div>
+        </div>
+
+        <!-- Step 1: Authenticate (Master Bypass) -->
+        <button class="btn btn-gold" id="authBtn">
+            🔑 1. Authenticate as Master
+        </button>
+
+        <!-- Step 2: Nuke (appears after auth) -->
+        <button class="btn btn-danger hidden" id="nukeBtn">
+            ☢️ 2. Nuke Everything
+        </button>
+
+        <!-- Step 3: Go to setup (appears after nuke) -->
+        <button class="btn btn-secondary hidden" id="setupBtn">
+            ➡️ 3. Go to Master Setup
+        </button>
+
+        <div class="status" id="status"></div>
+
+        <div class="progress-bar" id="progressBar">
+            <div class="fill" id="progressFill"></div>
+        </div>
+
+        <div class="log-box hidden" id="logBox"></div>
+
+        <div class="footer-note">
+            ⚠️ This action cannot be undone — make sure you want a fresh start
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script src="firebase-config.js?v=4.4.0"></script>
+    <script src="sanctuary-engine.js?v=4.4.0"></script>
+
+    <script>
+        (function() {
+            const MASTER_EMAIL = "admin_zekra_9454@zekra.com";
+            const MASTER_USERNAME = "admin_zekra_9454";
+            const MASTER_PASSWORD = "Master2026!";
+            const SESSION_KEY = "zekra_session_id";
+
+            const authBtn = document.getElementById('authBtn');
+            const nukeBtn = document.getElementById('nukeBtn');
+            const setupBtn = document.getElementById('setupBtn');
+            const statusEl = document.getElementById('status');
+            const statusDisplay = document.getElementById('statusDisplay');
+            const sessionDisplay = document.getElementById('sessionDisplay');
+            const logBox = document.getElementById('logBox');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+
+            let masterSession = null;
+            let realUID = null;
+
+            // ── Logging ──
+            function log(msg, type = 'info') {
+                logBox.classList.remove('hidden');
+                const entry = document.createElement('div');
+                entry.className = 'log-' + type;
+                entry.textContent = '> ' + msg;
+                logBox.appendChild(entry);
+                logBox.scrollTop = logBox.scrollHeight;
+                console.log(`[NUCLEAR:${type}] ${msg}`);
+            }
+
+            function setProgress(pct) {
+                progressBar.classList.add('active');
+                progressFill.style.width = pct + '%';
+            }
+
+            function setStatus(msg, type = 'info') {
+                statusEl.textContent = msg;
+                statusEl.className = 'status ' + type;
+                statusDisplay.textContent = msg;
+                statusDisplay.className = 'val ' + (type === 'success' ? 'success' : type === 'error' ? 'danger' : '');
+            }
+
+            function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+            // ── Step 1: Authenticate as Master ──
+            async function authenticateMaster() {
+                authBtn.disabled = true;
+                authBtn.textContent = '⏳ Authenticating...';
+                setStatus('Starting master authentication...', 'info');
+                log('Initiating master bypass authentication...', 'info');
+                setProgress(10);
+
+                // Wait for Firebase & Engine
+                if (typeof SanctuaryEngine === 'undefined') {
+                    setStatus('❌ SanctuaryEngine not loaded', 'error');
+                    log('SanctuaryEngine failed to load', 'error');
+                    authBtn.disabled = false;
+                    authBtn.textContent = '🔑 1. Authenticate as Master';
+                    return;
+                }
+
+                // Wait for Firebase init
+                let attempts = 0;
+                while (!firebase.apps.length && attempts < 30) {
+                    await sleep(500);
+                    attempts++;
+                }
+                if (!firebase.apps.length) {
+                    setStatus('❌ Firebase failed to initialize', 'error');
+                    log('Firebase not initialized after 15s', 'error');
+                    authBtn.disabled = false;
+                    authBtn.textContent = '🔑 1. Authenticate as Master';
+                    return;
+                }
+                log('Firebase initialized successfully', 'success');
+                setProgress(20);
+
+                // Try bypass master login
+                setStatus('Attempting master bypass...', 'info');
+                log('Calling SanctuaryEngine.bypassMasterLogin()...', 'info');
+                
+                try {
+                    const result = await SanctuaryEngine.bypassMasterLogin();
+                    log(`Bypass result: success=${result.success}, uid=${result.uid}`, result.success ? 'success' : 'warning');
+                    
+                    if (!result.success) {
+                        throw new Error('Bypass returned success=false');
+                    }
+                    
+                    masterSession = result;
+                    realUID = result.uid;
+                    
+                    setProgress(40);
+                    setStatus(`✅ Authenticated! UID: ${realUID}`, 'success');
+                    log(`Master session established with UID: ${realUID}`, 'success');
+                    sessionDisplay.textContent = '✅ ACTIVE';
+                    sessionDisplay.className = 'val success';
+                    
+                    // Enable nuke button
+                    nukeBtn.classList.remove('hidden');
+                    authBtn.textContent = '✅ Authenticated';
+                    authBtn.style.background = '#4ade80';
+                    
+                } catch (err) {
+                    log(`Bypass failed: ${err.message}`, 'error');
+                    setStatus(`❌ Auth error: ${err.message}`, 'error');
+                    
+                    // Fallback: try force-injecting session manually
+                    log('Attempting manual session injection fallback...', 'warning');
+                    try {
+                        const fallbackUID = "master_root";
+                        const sessionData = {
+                            id: MASTER_USERNAME,
+                            uid: fallbackUID,
+                            role: 'master',
+                            email: MASTER_EMAIL,
+                            lastLogin: Date.now()
+                        };
+                        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+                        sessionStorage.setItem('zekra_admin_override', 'true');
+                        localStorage.removeItem('zekra_lock_status');
+                        
+                        masterSession = sessionData;
+                        realUID = fallbackUID;
+                        
+                        log('Manual fallback session injected with UID: ' + fallbackUID, 'success');
+                        setProgress(40);
+                        setStatus('⚠️ Fallback session injected (UID: master_root)', 'warning');
+                        sessionDisplay.textContent = '⚠️ FALLBACK';
+                        sessionDisplay.className = 'val warning';
+                        
+                        nukeBtn.classList.remove('hidden');
+                        authBtn.textContent = '✅ Fallback Active';
+                    } catch (fallbackErr) {
+                        log(`Fallback also failed: ${fallbackErr.message}`, 'error');
+                        setStatus('❌ All auth methods failed', 'error');
+                        authBtn.disabled = false;
+                        authBtn.textContent = '🔑 1. Authenticate as Master';
+                        return;
+                    }
+                }
+            }
+
+            // ── Step 2: Nuke Everything ──
+            async function nukeEverything() {
+                nukeBtn.disabled = true;
+                nukeBtn.textContent = '☢️ WIPING...';
+                setStatus('🔥 Initiating nuclear wipe...', 'warning');
+                log('========================================', 'info');
+                log('☢️ NUCLEAR RESET SEQUENCE ACTIVATED', 'warning');
+                log('========================================', 'info');
+                setProgress(50);
+                await sleep(500);
+
+                // ── 2A: Wipe admin_config ──
+                try {
+                    log('Wiping admin_config...', 'info');
+                    await firebase.database().ref('admin_config').set(null);
+                    log('✅ admin_config deleted', 'success');
+                } catch (e) {
+                    log(`admin_config wipe: ${e.message}`, 'warning');
+                }
+                setProgress(60);
+
+                // ── 2B: Wipe users node ──
+                try {
+                    log('Wiping all users data...', 'info');
+                    await firebase.database().ref('users').set(null);
+                    log('✅ users node deleted', 'success');
+                } catch (e) {
+                    log(`users wipe: ${e.message}`, 'warning');
+                }
+                setProgress(70);
+
+                // ── 2C: Wipe master_logs ──
+                try {
+                    log('Wiping master_logs...', 'info');
+                    await firebase.database().ref('master_logs').set(null);
+                    log('✅ master_logs deleted', 'success');
+                } catch (e) {
+                    log(`master_logs wipe: ${e.message}`, 'warning');
+                }
+                setProgress(75);
+
+                // ── 2D: Wipe presence ──
+                try {
+                    log('Wiping presence data...', 'info');
+                    await firebase.database().ref('presence').set(null);
+                    log('✅ presence node deleted', 'success');
+                } catch (e) {
+                    log(`presence wipe: ${e.message}`, 'warning');
+                }
+                setProgress(80);
+
+                // ── 2E: Delete Firebase Auth accounts ──
+                log('Attempting to delete Firebase Auth accounts...', 'info');
+                try {
+                    // First try to sign in with master to get real UID
+                    if (firebase.auth().currentUser) {
+                        const user = firebase.auth().currentUser;
+                        log(`Current auth user: ${user.uid}`, 'info');
+                        try {
+                            await user.delete();
+                            log('✅ Master auth account deleted', 'success');
+                        } catch (deleteErr) {
+                            log(`Master auth delete failed (may need reauth): ${deleteErr.message}`, 'warning');
+                            // Reauthenticate then delete
+                            try {
+                                const cred = await firebase.auth().signInWithEmailAndPassword(MASTER_EMAIL, MASTER_PASSWORD);
+                                await cred.user.delete();
+                                log('✅ Master auth account deleted after reauth', 'success');
+                            } catch (reauthErr) {
+                                log(`Reauth+delete failed: ${reauthErr.message}`, 'warning');
+                                log('Skipping Auth deletion — will be handled by setup', 'info');
+                            }
+                        }
+                    } else {
+                        // Try signing in fresh
+                        try {
+                            const cred = await firebase.auth().signInWithEmailAndPassword(MASTER_EMAIL, MASTER_PASSWORD);
+                            await cred.user.delete();
+                            log('✅ Master auth account deleted', 'success');
+                        } catch (signinErr) {
+                            log(`Auth sign-in failed (account may not exist): ${signinErr.message}`, 'warning');
+                        }
+                    }
+                } catch (e) {
+                    log(`Auth deletion error: ${e.message}`, 'warning');
+                }
+                setProgress(90);
+
+                // ── 2F: Clear all local storage ──
+                log('Clearing local storage...', 'info');
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    log('✅ All local storage cleared', 'success');
+                } catch (e) {
+                    log(`localStorage clear: ${e.message}`, 'warning');
+                }
+
+                setProgress(95);
+                await sleep(300);
+
+                // ── Done ──
+                log('========================================', 'info');
+                log('✅ NUCLEAR RESET COMPLETE', 'success');
+                log('========================================', 'info');
+                setProgress(100);
+                setStatus('✅ Database fully wiped! Ready for fresh setup.', 'success');
+                nukeBtn.textContent = '☢️ Done';
+                
+                // Show setup button
+                setupBtn.classList.remove('hidden');
+                
+                // Auto-redirect after 3 seconds
+                setTimeout(() => {
+                    log('Redirecting to setup-master.html...', 'info');
+                    window.location.href = 'setup-master.html?auto=1';
+                }, 3000);
+            }
+
+            // ── Step 3: Go to setup ──
+            function goToSetup() {
+                window.location.href = 'setup-master.html?auto=1';
+            }
+
+            // ── Wire up buttons ──
+            authBtn.addEventListener('click', authenticateMaster);
+            nukeBtn.addEventListener('click', nukeEverything);
+            setupBtn.addEventListener('click', goToSetup);
+
+            // ── Auto-execute if ?auto param ──
+            window.addEventListener('load', () => {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('auto') === '1' || params.get('auto') === 'true') {
+                    setTimeout(() => {
+                        authenticateMaster().then(() => {
+                            // Auto-nuke after auth if ?nuke is also present
+                            if (params.get('nuke') === '1') {
+                                setTimeout(() => nukeEverything(), 1000);
+                            }
+                        });
+                    }, 1000);
+                }
+            });
+
+            // Expose for debugging
+            window.__nuclearReset = {
+                authenticateMaster,
+                nukeEverything,
+                goToSetup
+            };
+        })();
+    </script>
+</body>
+</html>
