@@ -18,10 +18,11 @@
         .btn-red:disabled{opacity:.4}
         .btn-gold{background:#FFD700;color:#000}
         .btn-gold:hover{opacity:.9}
-        .log{background:#111;border:1px solid #222;border-radius:10px;padding:12px;margin-top:15px;max-height:250px;overflow-y:auto;text-align:left;font-family:monospace;font-size:11px;line-height:1.7;display:none}
+        .log{background:#111;border:1px solid #222;border-radius:10px;padding:12px;margin-top:15px;max-height:300px;overflow-y:auto;text-align:left;font-family:monospace;font-size:11px;line-height:1.7;display:none}
         .log .ok{color:#4ade80}
         .log .err{color:#ff4444}
         .log .inf{color:#60a5fa}
+        .log .warn{color:#facc15}
         .pbar{width:100%;height:4px;background:#222;border-radius:2px;margin-top:12px;overflow:hidden;display:none}
         .pbar .fill{height:100%;width:0%;background:linear-gradient(90deg,#ff4444,#FFD700);transition:width .5s}
     </style>
@@ -30,10 +31,12 @@
 <div class="c">
     <div style="font-size:48px">🔥</div>
     <h1>NUCLEAR RESET</h1>
-    <p class="sub">مسح كل البيانات من Firebase Realtime Database</p>
+    <p class="sub">مسح كل البيانات + حساب الماستر — تلقائي بالكامل</p>
     <div class="warn">
-        <strong>⚠️ هتتمسح كل العقد دي:</strong><br>
-        admin_configs · admin_notifications · couples · gifts_marium · gifts_yossif · locations · orders · orders_database · paymentRequests · peaceMode · peace_response · peace_treaty_status · rechargeRequests · relationships · sketchbook · surprise_trigger · test_connection · time_capsules · vaults · zekra_chat · zekra_data · zekra_orders<br><br>
+        <strong>⚠️ هيتشاف كل حاجة:</strong><br>
+        • 22 عقدة من Realtime Database<br>
+        • حساب Firebase Auth (admin_zekra_9454@zekra.com)<br>
+        • localStorage + sessionStorage<br><br>
         <strong>وشكل الموقع مش هيتغير.</strong>
     </div>
     <button class="btn btn-red" id="nukeBtn" onclick="nuke()">☢️ NUKE EVERYTHING</button>
@@ -44,13 +47,16 @@
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
 var DB_URL = "https://zekra-9454-default-rtdb.europe-west1.firebasedatabase.app";
+var API_KEY = "AIzaSyCIFqGpG3OgQPG9xWMqk0fY9pqwaoe7jk8";
+var MASTER_EMAIL = "admin_zekra_9454@zekra.com";
+var MASTER_PASS = "Master2026!";
 
-// Initialize Firebase manually (no config needed for direct REST calls)
 var config = {
-    apiKey: "AIzaSyCIFqGpG3OgQPG9xWMqk0fY9pqwaoe7jk8",
+    apiKey: API_KEY,
     authDomain: "zekra-9454.firebaseapp.com",
     databaseURL: DB_URL,
     projectId: "zekra-9454"
@@ -58,28 +64,13 @@ var config = {
 if (!firebase.apps.length) firebase.initializeApp(config);
 
 var NODES = [
-    "admin_configs",
-    "admin_notifications",
-    "couples",
-    "gifts_marium",
-    "gifts_yossif",
-    "locations",
-    "orders",
-    "orders_database",
-    "paymentRequests",
-    "peaceMode",
-    "peace_response",
-    "peace_treaty_status",
-    "rechargeRequests",
-    "relationships",
-    "sketchbook",
-    "surprise_trigger",
-    "test_connection",
-    "time_capsules",
-    "vaults",
-    "zekra_chat",
-    "zekra_data",
-    "zekra_orders"
+    "admin_configs", "admin_notifications", "couples",
+    "gifts_marium", "gifts_yossif", "locations",
+    "orders", "orders_database", "paymentRequests",
+    "peaceMode", "peace_response", "peace_treaty_status",
+    "rechargeRequests", "relationships", "sketchbook",
+    "surprise_trigger", "test_connection", "time_capsules",
+    "vaults", "zekra_chat", "zekra_data", "zekra_orders"
 ];
 
 var nukeBtn = document.getElementById('nukeBtn');
@@ -88,13 +79,11 @@ var statusEl = document.getElementById('status');
 var logEl = document.getElementById('log');
 var pbar = document.getElementById('pbar');
 var pfill = document.getElementById('pfill');
-var total = NODES.length;
-var done = 0;
 
 function log(msg, type) {
     logEl.style.display = 'block';
     var d = document.createElement('div');
-    d.className = type || 'inf';
+    d.className = 'log-' + (type || 'inf');
     d.textContent = '> ' + msg;
     logEl.appendChild(d);
     logEl.scrollTop = logEl.scrollHeight;
@@ -112,12 +101,59 @@ function setProgress(pct) {
 
 function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
+// ── Delete Firebase Auth account via REST API ──
+async function deleteAuthAccount() {
+    log('🔐 محاولة حذف حساب Firebase Auth...', 'warn');
+    try {
+        // Step 1: Sign in to get idToken
+        var signInUrl = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + API_KEY;
+        var resp = await fetch(signInUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: MASTER_EMAIL, password: MASTER_PASS, returnSecureToken: true})
+        });
+        var data = await resp.json();
+        
+        if (data.error) {
+            log('❌ فشل تسجيل الدخول: ' + (data.error.message || 'unknown'), 'err');
+            log('⚠️ لازم تمسح الحساب يدوي من Firebase Console > Authentication', 'warn');
+            return false;
+        }
+        
+        var idToken = data.idToken;
+        log('✅ تم تسجيل الدخول للحصول على idToken', 'ok');
+        
+        // Step 2: Delete account using idToken
+        var deleteUrl = "https://identitytoolkit.googleapis.com/v1/accounts:delete?key=" + API_KEY;
+        var delResp = await fetch(deleteUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({idToken: idToken})
+        });
+        var delData = await delResp.json();
+        
+        if (delData.error) {
+            log('❌ فشل حذف الحساب: ' + (delData.error.message || 'unknown'), 'err');
+            log('⚠️ لازم تمسح الحساب يدوي من Firebase Console > Authentication', 'warn');
+            return false;
+        }
+        
+        log('✅ تم حذف حساب Firebase Auth بنجاح!', 'ok');
+        return true;
+    } catch (e) {
+        log('❌ خطأ في حذف Auth: ' + e.message, 'err');
+        log('⚠️ لازم تمسح الحساب يدوي من Firebase Console > Authentication', 'warn');
+        return false;
+    }
+}
+
+// ── Main nuke function ──
 async function nuke() {
     nukeBtn.disabled = true;
     nukeBtn.textContent = '☢️ جاري المسح...';
     setStatus('🔥 بدء المسح النووي...', 'warning');
     log('========================================');
-    log('☢️ بدء تفعيل المسح النووي', 'warning');
+    log('☢️ بدء تفعيل المسح النووي', 'warn');
     log('========================================');
     setProgress(5);
 
@@ -126,7 +162,7 @@ async function nuke() {
     while (!firebase.apps.length && att < 20) { await sleep(500); att++; }
     if (!firebase.apps.length) {
         setStatus('❌ Firebase لم يعمل', 'error');
-        log('Firebase فشل في التحميل', 'error');
+        log('Firebase فشل في التحميل', 'err');
         nukeBtn.disabled = false;
         nukeBtn.textContent = '☢️ NUKE EVERYTHING';
         return;
@@ -134,7 +170,7 @@ async function nuke() {
     log('✅ Firebase متصل', 'ok');
     setProgress(10);
 
-    // Wipe each node
+    // ── Phase 1: Wipe all database nodes ──
     for (var i = 0; i < NODES.length; i++) {
         var node = NODES[i];
         try {
@@ -144,29 +180,37 @@ async function nuke() {
         } catch (e) {
             log('❌ ' + node + ': ' + e.message, 'err');
         }
-        done = i + 1;
-        setProgress(10 + (done / total) * 80);
-        await sleep(200);
+        setProgress(10 + ((i + 1) / NODES.length) * 50);
+        await sleep(150);
     }
+    setProgress(60);
 
-    // Clear local storage
+    // ── Phase 2: Delete Firebase Auth account ──
+    log('---');
+    log('🔐 Phase 2: حذف حساب Firebase Auth', 'warn');
+    await deleteAuthAccount();
+    setProgress(80);
+
+    // ── Phase 3: Clear local storage ──
+    log('---');
+    log('🧹 Phase 3: مسح التخزين المحلي', 'warn');
     try {
-        log('🧹 مسح localStorage...');
         localStorage.clear();
         sessionStorage.clear();
-        log('✅ تم مسح localStorage', 'ok');
+        log('✅ تم مسح localStorage + sessionStorage', 'ok');
     } catch (e) {
         log('localStorage: ' + e.message, 'err');
     }
-    setProgress(95);
+    setProgress(90);
 
     await sleep(300);
 
+    // ── Done ──
     log('========================================');
     log('✅ اكتمل المسح النووي!', 'ok');
     log('========================================');
     setProgress(100);
-    setStatus('✅ تم مسح كل البيانات! جاهز للإعداد من جديد.', 'success');
+    setStatus('✅ تم مسح كل شيء! جاهز للإعداد من جديد.', 'success');
     nukeBtn.textContent = '☢️ تم';
 
     setupBtn.style.display = 'block';
