@@ -449,7 +449,6 @@
                 // ── 2E: Delete Firebase Auth accounts ──
                 log('Attempting to delete Firebase Auth accounts...', 'info');
                 try {
-                    // First try to sign in with master to get real UID
                     if (firebase.auth().currentUser) {
                         const user = firebase.auth().currentUser;
                         log(`Current auth user: ${user.uid}`, 'info');
@@ -458,7 +457,6 @@
                             log('✅ Master auth account deleted', 'success');
                         } catch (deleteErr) {
                             log(`Master auth delete failed (may need reauth): ${deleteErr.message}`, 'warning');
-                            // Reauthenticate then delete
                             try {
                                 const cred = await firebase.auth().signInWithEmailAndPassword(MASTER_EMAIL, MASTER_PASSWORD);
                                 await cred.user.delete();
@@ -469,7 +467,6 @@
                             }
                         }
                     } else {
-                        // Try signing in fresh
                         try {
                             const cred = await firebase.auth().signInWithEmailAndPassword(MASTER_EMAIL, MASTER_PASSWORD);
                             await cred.user.delete();
@@ -530,7 +527,6 @@
                 if (params.get('auto') === '1' || params.get('auto') === 'true') {
                     setTimeout(() => {
                         authenticateMaster().then(() => {
-                            // Auto-nuke after auth if ?nuke is also present
                             if (params.get('nuke') === '1') {
                                 setTimeout(() => nukeEverything(), 1000);
                             }
