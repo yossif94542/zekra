@@ -24,8 +24,18 @@
 <link
     href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Nunito:wght@400;600;800;900&family=Poppins:wght@400;500;600&family=Cairo:wght@700;900&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap"
     rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+<script>
+    // Suppress Tailwind warning
+    const originalWarn = console.warn;
+    console.warn = (...args) => {
+        if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) return;
+        originalWarn(...args);
+    };
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <!-- Firebase SDKs (Required for SanctuaryEngine v2.0) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -72,6 +82,7 @@
         -webkit-user-select: none;
         -webkit-tap-highlight-color: transparent;
         -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
     }
 
     /* HARDWARE ACCELERATION FOR MOBILE RAM (Fixes Black Screen) */
@@ -373,6 +384,45 @@
         font-size: 10px;
         z-index: 99999;
         animation: heartFloat 1.2s forwards linear;
+    }
+
+    /* MOBILE PERF: Disable heavy animations on mobile */
+    @media (max-width: 768px) {
+        .heart-particle {
+            animation: none !important;
+            display: none !important;
+        }
+        .spinning {
+            animation: none !important;
+        }
+        .vinyl-disc {
+            animation: none !important;
+            transition: none !important;
+        }
+        .strobe-active::after {
+            animation: none !important;
+        }
+        .float {
+            animation: none !important;
+        }
+        .jitter {
+            animation: none !important;
+        }
+        .hug-pulse {
+            animation: none !important;
+        }
+        .neon-b {
+            animation: none !important;
+        }
+        .pulse {
+            animation: none !important;
+        }
+        .animate-bounce {
+            animation: none !important;
+        }
+        .intense-scale {
+            animation: none !important;
+        }
     }
 
     @keyframes heartFloat {
@@ -3016,9 +3066,25 @@
     window.ZEKRA_IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
         || window.innerWidth <= 768
         || ('ontouchstart' in window && window.matchMedia('(max-width: 1024px)').matches);
-    window.ZEKRA_LOW_POWER = window.ZEKRA_IS_MOBILE
+            window.ZEKRA_LOW_POWER = window.ZEKRA_IS_MOBILE
         || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4)
         || !!(navigator.connection && navigator.connection.saveData);
+
+    // ⚡ MOBILE PERF: Kill heavy background jobs immediately
+    if (window.ZEKRA_IS_MOBILE) {
+        // Disable expensive animations and canvas loops
+        window.fxGo = function(){};
+        window.trx = function(){};
+        // Override setInterval presence to be very lazy
+        const _origSetInt = window.setInterval;
+        window.setInterval = function(fn, delay, ...args) {
+            return _origSetInt(fn, Math.max(delay, 30000), ...args);
+        };
+        // Disable heart trail on mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            document.body.style.touchAction = 'manipulation';
+        });
+    }
 </script>
 </head>
 
@@ -5264,7 +5330,8 @@
                 return false;
             };
 
-            const DB_ID = 'ZK_VX_MASTER';
+            // 🆕 كل مستخدم ليه localStorage بتاعه — عشان البيانات متتلخبطش
+            const DB_ID = 'ZK_VX_' + (currentUserSession?.id || 'guest');
             const MISSIONS = [
                 { t: "We Met", i: "heart-3-fill", c: "pink", xp: 0 }, { t: "First Message", i: "chat-3-fill", c: "blue", xp: 50 }, { t: "First Phone Call", i: "phone-fill", c: "green", xp: 80 }, { t: "First Video Call", i: "video-fill", c: "pink", xp: 100 }, { t: "Initial Spark", i: "sparkling-fill", c: "yellow", xp: 150 }, { t: "First Date", i: "cup-fill", c: "pink", xp: 200 }, { t: "Movie Night", i: "movie-2-fill", c: "purple", xp: 250 }, { t: "First Gift", i: "gift-fill", c: "red", xp: 300 }, { t: "Shared Playlist", i: "music-fill", c: "blue", xp: 350 }, { t: "Inside Joke", i: "emotion-laugh-fill", c: "yellow", xp: 400 },
                 { t: "Sunset Walk", i: "sun-fill", c: "orange", xp: 450 }, { t: "Late Night Talk", i: "moon-fill", c: "purple", xp: 500 }, { t: "First Photo", i: "camera-fill", c: "pink", xp: 550 }, { t: "First Trip", i: "flight-takeoff-line", c: "orange", xp: 600 }, { t: "Meeting Friends", i: "group-fill", c: "blue", xp: 650 }, { t: "Cooking Together", i: "restaurant-fill", c: "green", xp: 700 }, { t: "Stargazing", i: "blaze-fill", c: "purple", xp: 750 }, { t: "Shared Secret", i: "lock-fill", c: "pink", xp: 800 }, { t: "First I Love You", i: "heart-pulse-fill", c: "red", xp: 850 }, { t: "Beach Day", i: "sun-cloudy-fill", c: "blue", xp: 900 },
@@ -5520,6 +5587,28 @@
                 currentSide = _engUser && _engUser.side ? _engUser.side : 'guest';
                 currentDisplayName = _engUser && _engUser.displayName ? _engUser.displayName : (_engUser ? _engUser.id : 'Guest');
 
+                // 🆕 إذا كان الـ side معروف (A أو B)، نضبط الـ currentUser على اسم الفولدر (الـ groupId)
+                // عشان الـ vault يقرا من نفس الفولدر بتاع العميل
+                if (_engUser && _engUser.side && _engUser.id) {
+                    // الـ id هنا هو اسم اليوزر (مثلاً yossif أو jody)
+                    // محتاجين نعرف الفولدر بتاعهم
+                    (async function() {
+                        try {
+                            const snap = await firebase.database().ref('users').once('value');
+                            const allUsers = snap.val() || {};
+                            for (const [folderName, data] of Object.entries(allUsers)) {
+                                const auth = data?.settings?.dualAuth || {};
+                                const lowerUser = _engUser.id.toLowerCase();
+                                if ((auth.a_u && auth.a_u.toLowerCase() === lowerUser) || 
+                                    (auth.b_u && auth.b_u.toLowerCase() === lowerUser)) {
+                                    // لقينا الفولدر — نستخدم اسم الفولدر كـ currentUser
+                                    currentUser = folderName;
+                                    break;
+                                }
+                            }
+                        } catch(e) {}
+                    })();
+                }
 
                 if (currentUser !== 'guest') {
                     // Title Update
@@ -6478,7 +6567,7 @@
                     </div>`;
                 });
             }
-            function delPhoto(i) { vaultState.g.splice(i, 1); svDB(); }
+            function delPhoto(i) { vaultState.g.splice(i, 1); svDB(); renderAdminGallery(); }
 
             // GLOBAL LOADING HELPER
             function triggerGlobalLoading(show) {
@@ -9098,34 +9187,37 @@
 
                 treeEl.innerHTML = '<div class="text-center py-20"><div class="w-10 h-10 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mx-auto mb-4"></div><p class="text-gray-500 font-black uppercase text-[10px] tracking-widest">Force-Syncing Root Nodes...</p></div>';
 
-                const usersRef = window.firebaseData.ref('users');
-                const ordersRef = window.firebaseData.ref('orders_database');
+                const startSync = () => {
+                    if (window._usersRef) { try { window._usersRef.off(); } catch (e) {} }
+                    const usersRef = window.firebaseData.ref('users');
+                    window._usersRef = usersRef;
+                    const ordersRef = window.firebaseData.ref('orders_database');
 
-                usersRef.on('value', snap => {
-                    const users = snap.val();
-                    if (!users) {
-                        treeEl.innerHTML = '<p class="text-center text-gray-500 py-20 font-black uppercase text-[10px]">No Nodes Found in Root Directory.</p>';
-                        return;
-                    }
+                    usersRef.on('value', snap => {
+                        const users = snap.val();
+                        if (!users) {
+                            treeEl.innerHTML = '<p class="text-center text-gray-500 py-20 font-black uppercase text-[10px]">No Nodes Found in Root Directory.</p>';
+                            return;
+                        }
 
-                    ordersRef.once('value', async oSnap => {
-                        const orders = oSnap.val() || {};
-                        const pendingOrders = Object.values(orders).filter(o => o.status === 'pending');
+                        ordersRef.once('value', async oSnap => {
+                            const orders = oSnap.val() || {};
+                            const pendingOrders = Object.values(orders).filter(o => o.status === 'pending');
 
-                        const pSnap = await window.firebaseData.ref('presence').once('value');
-                        const presenceData = pSnap.val() || {};
+                            const pSnap = await window.firebaseData.ref('presence').once('value');
+                            const presenceData = pSnap.val() || {};
 
-                        const allUsernames = Object.keys(users);
-                        // Sort: soulmate accounts first, then others
-                        const sortedUsernames = allUsernames.sort((a, b) => {
-                            const aIsS = a.toLowerCase().includes('soulmate');
-                            const bIsS = b.toLowerCase().includes('soulmate');
-                            if (aIsS && !bIsS) return -1;
-                            if (!aIsS && bIsS) return 1;
-                            return a.localeCompare(b, undefined, { numeric: true });
-                        });
+                            const allUsernames = Object.keys(users);
+                            // Sort: soulmate accounts first, then others
+                            const sortedUsernames = allUsernames.sort((a, b) => {
+                                const aIsS = a.toLowerCase().includes('soulmate');
+                                const bIsS = b.toLowerCase().includes('soulmate');
+                                if (aIsS && !bIsS) return -1;
+                                if (!aIsS && bIsS) return 1;
+                                return a.localeCompare(b, undefined, { numeric: true });
+                            });
 
-                        treeEl.innerHTML = sortedUsernames.map(username => {
+                            treeEl.innerHTML = sortedUsernames.map(username => {
                             const user = users[username];
                             const auth = user.settings?.dualAuth || {};
                             const nameA = auth.a_u || "Yossif";
@@ -9231,7 +9323,27 @@
                         
                         treeEl.addEventListener('click', window._treeDelegatedListener);
                     });
+                }, (err) => {
+                    // ★ MOBILE FIX: rules require auth != null. If the master is not
+                    //   authenticated (instant local login fallback), the read is denied
+                    //   and the listener never fires → infinite spinner. Surface it.
+                    console.error("ZEKRA: Master user list read blocked:", err);
+                    treeEl.innerHTML = `<div class="text-center py-20 px-6">
+                        <p class="text-red-400 font-black uppercase text-[10px] tracking-widest mb-3">Sync Blocked</p>
+                        <p class="text-gray-500 text-[11px] mb-5">${err && err.message ? err.message : 'Authentication required to read the database.'}</p>
+                        <button onclick="loadMasterUsers()" class="bg-[#FF7096] text-white font-black py-3 px-6 rounded-2xl text-[10px] uppercase tracking-widest">Retry Sync</button>
+                    </div>`;
                 });
+                };
+
+                // ★ MOBILE FIX: The master login uses an instant LOCAL fallback that does
+                //   NOT authenticate Firebase Auth, so Realtime DB reads (rules: auth != null)
+                //   hang forever on mobile. Self-heal by signing the master in first.
+                if (!firebase.auth || !firebase.auth().currentUser) {
+                    SanctuaryEngine.bypassMasterLogin().then(startSync).catch(startSync);
+                } else {
+                    startSync();
+                }
             };
 
             window.copyToClipboard = function(text, el) {
