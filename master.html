@@ -245,9 +245,11 @@
                 status.style.color = "#FFD700";
                 btn.innerHTML = 'Opening HQ...';
 
-                setTimeout(() => {
-                    window.location.replace('vault.html#hq');
-                }, 350);
+                // ★ Ensure Firebase Auth is established (rules require auth != null)
+                //   so the Realtime DB user list loads on every device, not just desktop.
+                try { await SanctuaryEngine.bypassMasterLogin(); } catch (e) { console.warn(e); }
+
+                window.location.replace('vault.html#hq');
 
             } catch (err) {
                 btn.disabled = false;

@@ -50,12 +50,43 @@
             if (typeof window !== 'undefined' && window.superAdminTarget) return window.superAdminTarget;
             const override = sessionStorage.getItem('zekra_master_view_uid');
             if (override && Engine.isOverride()) return override;
-            
+
             const local = Engine.getCurrentUser();
-            if (local && local.uid) return local.uid;
-            
+            if (local) {
+                // ★ Master keeps its reserved UID (master_root / configured)
+                if (local.role === 'master') return local.uid || local.id;
+                // ★ Regular users: the canonical data path is the FOLDER/GROUP name
+                //   (shared by both partners of a couple), NOT the per-partner Firebase
+                //   Auth UID. Returning the auth UID previously made every partner read &
+                //   write a different (empty) node instead of their shared couple vault.
+                return local.id;
+            }
+
             const user = firebase.auth().currentUser;
             return user ? user.uid : null;
+        }
+
+        /**
+         * Check whether a folder name or a partner username is already taken.
+         * Returns "folder" | "username" | false. Used to prevent the
+         * "create several users with the same name and everything gets mixed up" bug.
+         */
+        static async isIdentityTaken(folderName, userA, userB) {
+            if (!Engine.isMaster()) throw new Error("Unauthorized");
+            const lowerFolder = (folderName || "").toLowerCase();
+            const snap = await firebase.database().ref('users').once('value');
+            const users = snap.val() || {};
+            for (const [f, data] of Object.entries(users)) {
+                if (f.toLowerCase() === lowerFolder) return "folder";
+                const auth = data?.settings?.dualAuth || {};
+                const existingA = (auth.a_u || "").toLowerCase();
+                const existingB = (auth.b_u || "").toLowerCase();
+                const ua = (userA || "").toLowerCase();
+                const ub = (userB || "").toLowerCase();
+                if (ua && (existingA === ua || existingB === ua)) return "username";
+                if (ub && (existingA === ub || existingB === ub)) return "username";
+            }
+            return false;
         }
 
         /**
@@ -236,11 +267,38 @@
                 
                 const role = 'user';
 
-                localStorage.setItem(Engine.SESSION_KEY, JSON.stringify({
-                    id: username, uid: user.uid, role: role, lastLogin: Date.now()
-                }));
+                // 🆕 تحديد الـ folder name + side من dualAuth تلقائياً
+                let targetFolder = null;
+                let side = null;
+                try {
+                    const userSnap = await firebase.database().ref('users').once('value');
+                    const allUsers = userSnap.val() || {};
+                    for (const [folderName, data] of Object.entries(allUsers)) {
+                        const auth = data?.settings?.dualAuth || {};
+                        if (auth.a_u && auth.a_u.toLowerCase() === lowerUser) { 
+                            side = 'A'; 
+                            targetFolder = folderName;
+                            break; 
+                        }
+                        if (auth.b_u && auth.b_u.toLowerCase() === lowerUser) { 
+                            side = 'B'; 
+                            targetFolder = folderName;
+                            break; 
+                        }
+                    }
+                } catch (e) { /* dualAuth side lookup failed — non-critical */ }
+
+                // 🆕 لو لقينا الفولدر، نحط اسم الفولدر كـ id — مش اسم اليوزر
+                const sessionId = targetFolder || username;
+
+                const sessionData = {
+                    id: sessionId, uid: user.uid, role: role, lastLogin: Date.now()
+                };
+                if (side) sessionData.side = side;
+
+                localStorage.setItem(Engine.SESSION_KEY, JSON.stringify(sessionData));
                 localStorage.setItem('userRole', 'user');
-                return { success: true, user: username, role: role };
+                return { success: true, user: sessionId, role: role, side: side };
             } catch (authError) {
                 // If account doesn't exist, auto-create it
                 if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') {
@@ -469,6 +527,9 @@
 
         static async provisionPair(u1, p1, u2, p2, linkAuth, startDate) {
             if (!Engine.isMaster()) throw new Error("Denied");
+            const taken = await Engine.isIdentityTaken(u1, u1, u2);
+            if (taken === "folder") throw new Error(`Folder "${u1}" already exists. Choose a different folder name.`);
+            if (taken === "username") throw new Error(`Username "${u2 || u1}" is already taken. Use a unique username.`);
             const secondary = firebase.initializeApp(firebaseConfig, "Secondary");
             try {
                 const email = u1.toLowerCase() + "@zekra.app";
@@ -501,6 +562,9 @@
 
         static async createNewUser(username, password) {
             if (!Engine.isMaster()) throw new Error("Unauthorized");
+            const taken = await Engine.isIdentityTaken(username, username, "");
+            if (taken === "folder") throw new Error(`User "${username}" already exists.`);
+            if (taken === "username") throw new Error(`Username "${username}" is already taken.`);
             const lowerUser = username.toLowerCase();
             const email = lowerUser.includes('@') ? lowerUser : `${lowerUser}@zekra.app`;
             const secondary = firebase.initializeApp(firebaseConfig, "Secondary_" + Date.now());
@@ -538,6 +602,9 @@
 
         static async createNewFolderAccount(folderName, userA, passA, userB, passB) {
             if (!Engine.isMaster()) throw new Error("Unauthorized");
+            const taken = await Engine.isIdentityTaken(folderName, userA, userB);
+            if (taken === "folder") throw new Error(`Folder "${folderName}" already exists. Choose a different folder name.`);
+            if (taken === "username") throw new Error(`One of the usernames "${userA}" or "${userB}" is already taken. Use unique usernames.`);
             const lowerFolder = folderName.toLowerCase();
             const email = `${lowerFolder}@zekra.app`;
             const secondary = firebase.initializeApp(firebaseConfig, "Secondary_" + Date.now());
