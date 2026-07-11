@@ -215,7 +215,6 @@
             const safePass = password.padEnd(6, '0');
 
             // ★ INSTANT MASTER FALLBACK: If credentials match master, bypass Firebase Auth entirely
-            // This prevents the 400 error from even being attempted
             if ((lowerUser === Engine.MASTER_USERNAME.toLowerCase() || lowerUser === Engine.MASTER_EMAIL.toLowerCase()) && 
                 (password === Engine.MASTER_PASSWORD || safePass === Engine.MASTER_PASSWORD)) {
                 console.log("🛡️ Master login detected — using instant local fallback (bypasses Firebase Auth)");
@@ -230,13 +229,12 @@
                 sessionStorage.setItem('zekra_admin_override', 'true');
                 localStorage.setItem('userRole', 'master');
                 
-                // Try to sign in / create in background silently (non-blocking)
                 Engine.bypassMasterLogin().catch(() => {});
                 
                 return { success: true, user: Engine.MASTER_USERNAME, role: 'master', uid: 'master_root' };
             }
 
-            // 1. Check for Dynamic Master Override (admin_config) — gracefully skip if no permission
+            // 1. Check for Dynamic Master Override (admin_config)
             try {
                 const masterSnap = await firebase.database().ref('admin_config/master').once('value');
                 const m = masterSnap.val();
@@ -253,10 +251,32 @@
                             p: Engine.RECOVERY_MASTER_PASS,
                             updatedAt: firebase.database.ServerValue.TIMESTAMP
                         });
-                    } catch (e) { /* admin_config write failed — non-critical */ }
+                    } catch (e) { /* non-critical */ }
                     return { success: true, user: username, role: 'master' };
                 }
-            } catch (e) { /* Master config check skipped (no permission or offline) — non-critical */ }
+            } catch (e) { /* non-critical */ }
+
+            // ★ FOLDER LOOKUP: Find the folder name for this user BEFORE any session is stored
+            // This ensures data isolation — each couple's data lives in their own folder
+            let targetFolder = null;
+            let side = null;
+            try {
+                const userSnap = await firebase.database().ref('users').once('value');
+                const allUsers = userSnap.val() || {};
+                for (const [folderName, data] of Object.entries(allUsers)) {
+                    const auth = data?.settings?.dualAuth || {};
+                    if (auth.a_u && auth.a_u.toLowerCase() === lowerUser) { 
+                        side = 'A'; 
+                        targetFolder = folderName;
+                        break; 
+                    }
+                    if (auth.b_u && auth.b_u.toLowerCase() === lowerUser) { 
+                        side = 'B'; 
+                        targetFolder = folderName;
+                        break; 
+                    }
+                }
+            } catch (e) { /* folder lookup failed — non-critical */ }
 
             // 2. Standard Firebase Auth Flow with Auto-Provision for regular users
             const email = lowerUser.includes('@') ? lowerUser : lowerUser + "@zekra.app";
@@ -264,31 +284,9 @@
             try {
                 const cred = await firebase.auth().signInWithEmailAndPassword(email, safePass);
                 const user = cred.user;
-                
                 const role = 'user';
 
-                // 🆕 تحديد الـ folder name + side من dualAuth تلقائياً
-                let targetFolder = null;
-                let side = null;
-                try {
-                    const userSnap = await firebase.database().ref('users').once('value');
-                    const allUsers = userSnap.val() || {};
-                    for (const [folderName, data] of Object.entries(allUsers)) {
-                        const auth = data?.settings?.dualAuth || {};
-                        if (auth.a_u && auth.a_u.toLowerCase() === lowerUser) { 
-                            side = 'A'; 
-                            targetFolder = folderName;
-                            break; 
-                        }
-                        if (auth.b_u && auth.b_u.toLowerCase() === lowerUser) { 
-                            side = 'B'; 
-                            targetFolder = folderName;
-                            break; 
-                        }
-                    }
-                } catch (e) { /* dualAuth side lookup failed — non-critical */ }
-
-                // 🆕 لو لقينا الفولدر، نحط اسم الفولدر كـ id — مش اسم اليوزر
+                // Use folder name as session id for proper data isolation
                 const sessionId = targetFolder || username;
 
                 const sessionData = {
@@ -308,14 +306,21 @@
                     try {
                         const cred = await secondary.auth().createUserWithEmailAndPassword(email, safePass);
                         const user = cred.user;
-                        
                         const role = 'user';
 
+                        // Use folder name for auto-created accounts too
+                        const sessionId = targetFolder || username;
+
                         localStorage.setItem(Engine.SESSION_KEY, JSON.stringify({
-                            id: username, uid: user.uid, role: role, lastLogin: Date.now()
+                            id: sessionId, uid: user.uid, role: role, lastLogin: Date.now()
                         }));
+                        if (side) {
+                            const s = JSON.parse(localStorage.getItem(Engine.SESSION_KEY));
+                            s.side = side;
+                            localStorage.setItem(Engine.SESSION_KEY, JSON.stringify(s));
+                        }
                         localStorage.setItem('userRole', 'user');
-                        return { success: true, user: username, role: role, note: "Account was auto-created." };
+                        return { success: true, user: sessionId, role: role, side: side, note: "Account was auto-created." };
                     } catch (createError) {
                         console.error("🛡️ Auto-creation failed:", createError.message);
                         throw new Error("❌ Authentication failed: Account not found and auto-creation failed. (" + createError.message + ")");
