@@ -1,0 +1,15 @@
+Plan & tool-based patch summary
+
+1) sanctuary-engine.js: existing file lacks Gallery media preparation, font application, and auto-sync debounced scheduler.
+2) vault.html: must add:
+   - a debounced watcher on vaultState -> calls pushToCloud() automatically.
+   - Gallery upload handler (detect image/video and store into vaultState.gallery).
+   - Font save handler to apply selected fonts to #ui-n (Name) and #ui-story-text/#ui-msg (Page Message).
+
+Due to vault.html size, exact edits must be applied where those handlers exist, using search for element IDs:
+- gal-file, gal-cap, btn-add-gal, adm-gal-list
+- btn-sv-basics, user-name-font, big-msg-font
+- pushToCloud(), vaultState
+
+This repo cannot rely on ripgrep; manual targeted insertion is required.
+
