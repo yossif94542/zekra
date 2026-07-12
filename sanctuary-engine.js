@@ -700,6 +700,99 @@
             return (window.requestAnimationFrame || (cb => setTimeout(cb, 16)))(callback);
         }
     }
-    window.SanctuaryEngine = Engine;
+// =========================
+// v4.4.1 PATCHES (Gallery, Fonts, Auto-Sync)
+// =========================
+
+// Debounced auto-sync scheduler
+Engine.__sync = Engine.__sync || { timer: null, lastHash: null, inFlight: false };
+
+Engine.__hashPayload = function(obj) {
+    try { return JSON.stringify(obj); } catch (e) { return String(Date.now()); }
+};
+
+Engine.scheduleAutoCloudSync = function(getPayload, opts) {
+    const debounceMs = (opts && typeof opts.debounceMs === 'number') ? opts.debounceMs : 850;
+    let payload = getPayload ? getPayload() : null;
+    if (!payload) return;
+
+    const hash = Engine.__hashPayload(payload);
+    if (Engine.__sync.lastHash === hash) return;
+    Engine.__sync.lastHash = hash;
+
+    if (Engine.__sync.timer) clearTimeout(Engine.__sync.timer);
+
+    Engine.__sync.timer = setTimeout(async () => {
+        if (Engine.__sync.inFlight) return;
+        if (typeof window.pushToCloud !== 'function') return;
+
+        Engine.__sync.inFlight = true;
+        try {
+            await window.pushToCloud();
+        } catch (e) {
+            console.error('Auto-sync pushToCloud failed:', e);
+        } finally {
+            Engine.__sync.inFlight = false;
+        }
+    }, debounceMs);
+};
+
+// Media detection helpers
+Engine.isVideoFile = function(fileOrTypeOrName) {
+    const type = (typeof fileOrTypeOrName === 'object' && fileOrTypeOrName && fileOrTypeOrName.type) ? fileOrTypeOrName.type : '';
+    const name = (typeof fileOrTypeOrName === 'object' && fileOrTypeOrName && fileOrTypeOrName.name) ? fileOrTypeOrName.name : '';
+    const t = String(type || '').toLowerCase();
+    const n = String(name || '').toLowerCase();
+    if (t.startsWith('video/')) return true;
+    return /\.(mp4|mov|webm|ogg|m4v|avi|mkv)(\?.*)?$/.test(n);
+};
+
+Engine.inferMediaType = function(file) {
+    return Engine.isVideoFile(file) ? 'video' : 'image';
+};
+
+Engine.readFileAsDataURL = function(file) {
+    return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onerror = () => reject(new Error('Failed to read file'));
+        fr.onload = () => resolve(fr.result);
+        fr.readAsDataURL(file);
+    });
+};
+
+Engine.prepareGalleryMediaItem = async function(file, caption) {
+    const type = Engine.inferMediaType(file);
+    const src = await Engine.readFileAsDataURL(file);
+    return {
+        id: 'gal_' + Date.now() + '_' + Math.random().toString(16).slice(2),
+        type,
+        src,
+        caption: String(caption || '').trim(),
+        createdAt: Date.now()
+    };
+};
+
+// Font application for Name + Page Message
+Engine.normalizeFontFamily = function(selValue) {
+    if (!selValue) return "'Nunito'";
+    const v = String(selValue).trim();
+    if ((v.startsWith("'") && v.endsWith("'")) || (v.startsWith('"') && v.endsWith('"'))) return v;
+    return "'" + v.replace(/^'+|'+$/g, '') + "'";
+};
+
+Engine.applyFontToNameAndMessages = function(fontNameFamily, fontMsgFamily) {
+    const famName = Engine.normalizeFontFamily(fontNameFamily);
+    const famMsg = Engine.normalizeFontFamily(fontMsgFamily);
+
+    const nameEl = document.getElementById('ui-n');
+    const storyEl = document.getElementById('ui-story-text');
+    const msgEl = document.getElementById('ui-msg');
+
+    if (nameEl) nameEl.style.fontFamily = famName;
+    if (storyEl) storyEl.style.fontFamily = famMsg;
+    if (msgEl) msgEl.style.fontFamily = famMsg;
+};
+
+window.SanctuaryEngine = Engine;
 
 })();
