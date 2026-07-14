@@ -57,14 +57,48 @@
     });
 </script>
 
-<style>
-    /* Global Core Variables */
-    :root {
-        --bg: #FCE4EC;
-        --cd: #FAF3E0;
-        --rad: 45px;
-        --blur: 8px;
-    }
+    <style>
+        /* Global Core Variables */
+        :root {
+            --bg: #FCE4EC;
+            --cd: #FAF3E0;
+            --rad: 45px;
+            --blur: 8px;
+        }
+
+        /* V2 Watermark - Verification Marker */
+        #v2-watermark {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 14px;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.08);
+            pointer-events: none;
+            user-select: none;
+            z-index: 999999;
+            letter-spacing: 2px;
+        }
+
+        /* Dynamic Couple Names */
+        .couple-names-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            line-height: 0.9;
+        }
+        .couple-name {
+            font-size: 68px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            color: #1e293b;
+        }
+        .couple-ampersand {
+            font-size: 32px;
+            color: #FF7096;
+            margin: 4px 0;
+        }
 
     body,
     html {
@@ -3851,6 +3885,7 @@
 
 
     <div id="sync-i" class="c-icon">☁️✔️</div>
+    <div id="v2-watermark">V2</div>
 
     <!-- VAULT LOCKED OVERLAY -->
     <div id="vault-locked-overlay"
@@ -3908,7 +3943,11 @@
         <header class="text-center w-full relative mb-10 mt-10">
             <h1 id="ui-n" onclick="editTopContent('n')"
                 class="f-nun text-[68px] font-black tracking-tighter text-[#1e293b] leading-[0.9] drop-shadow-sm master-editable">
-                Soulmates</h1>
+                <span id="parent-a-name">Parent A</span></h1>
+            <div class="text-[32px] text-pink-400 my-1">&</div>
+            <h1 id="ui-n" onclick="editTopContent('n')"
+                class="f-nun text-[68px] font-black tracking-tighter text-[#1e293b] leading-[0.9] drop-shadow-sm master-editable">
+                <span id="parent-b-name">Parent B</span></h1>
             <p id="ui-story-text" onclick="editTopContent('w')"
                 class="f-cur text-[48px] text-pink-400 mt-3 leading-none relative z-10 master-editable">story!</p>
         </header>
@@ -7865,6 +7904,16 @@
             buildUI(true);
             if (vaultState.t && !window.ZEKRA_IS_MOBILE) trx();
             bSwp();
+
+            // ★ DYNAMIC COUPLE NAMES: Update UI from vaultState
+            const parentANameEl = document.getElementById('parent-a-name');
+            const parentBNameEl = document.getElementById('parent-b-name');
+            if (parentANameEl && vaultState.parentA_name) {
+                parentANameEl.textContent = vaultState.parentA_name;
+            }
+            if (parentBNameEl && vaultState.parentB_name) {
+                parentBNameEl.textContent = vaultState.parentB_name;
+            }
 
             document.addEventListener("DOMContentLoaded", () => {
                 const savedUrl = localStorage.getItem('saved-spotify-url') || vaultState.a || "https://open.spotify.com/track/7s25THrKz86PI223H";
