@@ -245,10 +245,15 @@
                 status.style.color = "#FFD700";
                 btn.innerHTML = 'Opening HQ...';
 
-                // ★ Ensure Firebase Auth is established (rules require auth != null)
-                //   so the Realtime DB user list loads on every device, not just desktop.
-                try { await SanctuaryEngine.bypassMasterLogin(); } catch (e) { console.warn(e); }
+                // ★ FIXED: Don't await bypassMasterLogin() — the session is already stored locally
+                //   by the instant fallback in SanctuaryEngine.login(). Awaiting Firebase Auth can
+                //   hang if the master account doesn't exist yet or there's a connectivity issue.
+                //   Fire it in the background and redirect immediately.
+                SanctuaryEngine.bypassMasterLogin().catch(err => {
+                    console.warn("🛡️ Background bypass master login:", err?.message || err);
+                });
 
+                // Redirect immediately — session is in localStorage
                 window.location.replace('vault.html#hq');
 
             } catch (err) {

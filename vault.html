@@ -5331,7 +5331,7 @@
             };
 
             // 🆕 كل مستخدم ليه localStorage بتاعه — عشان البيانات متتلخبطش
-            const DB_ID = 'ZK_VX_' + (currentUserSession?.id || 'guest');
+            const DB_ID = 'ZK_VX_' + (SanctuaryEngine.getCurrentUser()?.id || 'guest');
             const MISSIONS = [
                 { t: "We Met", i: "heart-3-fill", c: "pink", xp: 0 }, { t: "First Message", i: "chat-3-fill", c: "blue", xp: 50 }, { t: "First Phone Call", i: "phone-fill", c: "green", xp: 80 }, { t: "First Video Call", i: "video-fill", c: "pink", xp: 100 }, { t: "Initial Spark", i: "sparkling-fill", c: "yellow", xp: 150 }, { t: "First Date", i: "cup-fill", c: "pink", xp: 200 }, { t: "Movie Night", i: "movie-2-fill", c: "purple", xp: 250 }, { t: "First Gift", i: "gift-fill", c: "red", xp: 300 }, { t: "Shared Playlist", i: "music-fill", c: "blue", xp: 350 }, { t: "Inside Joke", i: "emotion-laugh-fill", c: "yellow", xp: 400 },
                 { t: "Sunset Walk", i: "sun-fill", c: "orange", xp: 450 }, { t: "Late Night Talk", i: "moon-fill", c: "purple", xp: 500 }, { t: "First Photo", i: "camera-fill", c: "pink", xp: 550 }, { t: "First Trip", i: "flight-takeoff-line", c: "orange", xp: 600 }, { t: "Meeting Friends", i: "group-fill", c: "blue", xp: 650 }, { t: "Cooking Together", i: "restaurant-fill", c: "green", xp: 700 }, { t: "Stargazing", i: "blaze-fill", c: "purple", xp: 750 }, { t: "Shared Secret", i: "lock-fill", c: "pink", xp: 800 }, { t: "First I Love You", i: "heart-pulse-fill", c: "red", xp: 850 }, { t: "Beach Day", i: "sun-cloudy-fill", c: "blue", xp: 900 },
