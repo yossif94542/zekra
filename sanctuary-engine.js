@@ -215,7 +215,6 @@
             const safePass = password.padEnd(6, '0');
 
             // ★ INSTANT MASTER FALLBACK: If credentials match master, bypass Firebase Auth entirely
-            // This prevents the 400 error from even being attempted
             if ((lowerUser === Engine.MASTER_USERNAME.toLowerCase() || lowerUser === Engine.MASTER_EMAIL.toLowerCase()) && 
                 (password === Engine.MASTER_PASSWORD || safePass === Engine.MASTER_PASSWORD)) {
                 console.log("🛡️ Master login detected — using instant local fallback (bypasses Firebase Auth)");
@@ -230,13 +229,12 @@
                 sessionStorage.setItem('zekra_admin_override', 'true');
                 localStorage.setItem('userRole', 'master');
                 
-                // Try to sign in / create in background silently (non-blocking)
                 Engine.bypassMasterLogin().catch(() => {});
                 
                 return { success: true, user: Engine.MASTER_USERNAME, role: 'master', uid: 'master_root' };
             }
 
-            // 1. Check for Dynamic Master Override (admin_config) — gracefully skip if no permission
+            // 1. Check for Dynamic Master Override (admin_config)
             try {
                 const masterSnap = await firebase.database().ref('admin_config/master').once('value');
                 const m = masterSnap.val();
@@ -253,10 +251,32 @@
                             p: Engine.RECOVERY_MASTER_PASS,
                             updatedAt: firebase.database.ServerValue.TIMESTAMP
                         });
-                    } catch (e) { /* admin_config write failed — non-critical */ }
+                    } catch (e) { /* non-critical */ }
                     return { success: true, user: username, role: 'master' };
                 }
-            } catch (e) { /* Master config check skipped (no permission or offline) — non-critical */ }
+            } catch (e) { /* non-critical */ }
+
+            // ★ FOLDER LOOKUP: Find the folder name for this user BEFORE any session is stored
+            // This ensures data isolation — each couple's data lives in their own folder
+            let targetFolder = null;
+            let side = null;
+            try {
+                const userSnap = await firebase.database().ref('users').once('value');
+                const allUsers = userSnap.val() || {};
+                for (const [folderName, data] of Object.entries(allUsers)) {
+                    const auth = data?.settings?.dualAuth || {};
+                    if (auth.a_u && auth.a_u.toLowerCase() === lowerUser) { 
+                        side = 'A'; 
+                        targetFolder = folderName;
+                        break; 
+                    }
+                    if (auth.b_u && auth.b_u.toLowerCase() === lowerUser) { 
+                        side = 'B'; 
+                        targetFolder = folderName;
+                        break; 
+                    }
+                }
+            } catch (e) { /* folder lookup failed — non-critical */ }
 
             // 2. Standard Firebase Auth Flow with Auto-Provision for regular users
             const email = lowerUser.includes('@') ? lowerUser : lowerUser + "@zekra.app";
@@ -264,31 +284,9 @@
             try {
                 const cred = await firebase.auth().signInWithEmailAndPassword(email, safePass);
                 const user = cred.user;
-                
                 const role = 'user';
 
-                // 🆕 تحديد الـ folder name + side من dualAuth تلقائياً
-                let targetFolder = null;
-                let side = null;
-                try {
-                    const userSnap = await firebase.database().ref('users').once('value');
-                    const allUsers = userSnap.val() || {};
-                    for (const [folderName, data] of Object.entries(allUsers)) {
-                        const auth = data?.settings?.dualAuth || {};
-                        if (auth.a_u && auth.a_u.toLowerCase() === lowerUser) { 
-                            side = 'A'; 
-                            targetFolder = folderName;
-                            break; 
-                        }
-                        if (auth.b_u && auth.b_u.toLowerCase() === lowerUser) { 
-                            side = 'B'; 
-                            targetFolder = folderName;
-                            break; 
-                        }
-                    }
-                } catch (e) { /* dualAuth side lookup failed — non-critical */ }
-
-                // 🆕 لو لقينا الفولدر، نحط اسم الفولدر كـ id — مش اسم اليوزر
+                // Use folder name as session id for proper data isolation
                 const sessionId = targetFolder || username;
 
                 const sessionData = {
@@ -308,14 +306,21 @@
                     try {
                         const cred = await secondary.auth().createUserWithEmailAndPassword(email, safePass);
                         const user = cred.user;
-                        
                         const role = 'user';
 
+                        // Use folder name for auto-created accounts too
+                        const sessionId = targetFolder || username;
+
                         localStorage.setItem(Engine.SESSION_KEY, JSON.stringify({
-                            id: username, uid: user.uid, role: role, lastLogin: Date.now()
+                            id: sessionId, uid: user.uid, role: role, lastLogin: Date.now()
                         }));
+                        if (side) {
+                            const s = JSON.parse(localStorage.getItem(Engine.SESSION_KEY));
+                            s.side = side;
+                            localStorage.setItem(Engine.SESSION_KEY, JSON.stringify(s));
+                        }
                         localStorage.setItem('userRole', 'user');
-                        return { success: true, user: username, role: role, note: "Account was auto-created." };
+                        return { success: true, user: sessionId, role: role, side: side, note: "Account was auto-created." };
                     } catch (createError) {
                         console.error("🛡️ Auto-creation failed:", createError.message);
                         throw new Error("❌ Authentication failed: Account not found and auto-creation failed. (" + createError.message + ")");
@@ -623,11 +628,26 @@
                     await secondary.auth().signOut();
                 } catch (e) { console.warn("Partner A Auth creation skipped:", e.message); }
                 
-                // 4. Create the Auth account for Partner B
-                try {
-                    await secondary.auth().createUserWithEmailAndPassword(`${userB.toLowerCase()}@zekra.app`, safePassB);
-                    await secondary.auth().signOut();
-                } catch (e) { console.warn("Partner B Auth creation skipped:", e.message); }
+                // 4. Create the Auth account for Partner B (retry on failure)
+                let partnerBCreated = false;
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    try {
+                        await secondary.auth().createUserWithEmailAndPassword(`${userB.toLowerCase()}@zekra.app`, safePassB);
+                        await secondary.auth().signOut();
+                        partnerBCreated = true;
+                        break;
+                    } catch (e) {
+                        console.warn(`Partner B Auth creation attempt ${attempt+1} skipped:`, e.message);
+                        if (e.code === 'auth/email-already-in-use') {
+                            // Account already exists — this is fine, we just need it to exist
+                            partnerBCreated = true;
+                            break;
+                        }
+                    }
+                }
+                if (!partnerBCreated) {
+                    console.warn("⚠️ Could not create Partner B Auth account after 3 attempts.");
+                }
 
                 // 5. Save to Database
                 await firebase.database().ref(`users/${lowerFolder}`).set({
@@ -695,6 +715,99 @@
             return (window.requestAnimationFrame || (cb => setTimeout(cb, 16)))(callback);
         }
     }
-    window.SanctuaryEngine = Engine;
+// =========================
+// v4.4.1 PATCHES (Gallery, Fonts, Auto-Sync)
+// =========================
+
+// Debounced auto-sync scheduler
+Engine.__sync = Engine.__sync || { timer: null, lastHash: null, inFlight: false };
+
+Engine.__hashPayload = function(obj) {
+    try { return JSON.stringify(obj); } catch (e) { return String(Date.now()); }
+};
+
+Engine.scheduleAutoCloudSync = function(getPayload, opts) {
+    const debounceMs = (opts && typeof opts.debounceMs === 'number') ? opts.debounceMs : 850;
+    let payload = getPayload ? getPayload() : null;
+    if (!payload) return;
+
+    const hash = Engine.__hashPayload(payload);
+    if (Engine.__sync.lastHash === hash) return;
+    Engine.__sync.lastHash = hash;
+
+    if (Engine.__sync.timer) clearTimeout(Engine.__sync.timer);
+
+    Engine.__sync.timer = setTimeout(async () => {
+        if (Engine.__sync.inFlight) return;
+        if (typeof window.pushToCloud !== 'function') return;
+
+        Engine.__sync.inFlight = true;
+        try {
+            await window.pushToCloud();
+        } catch (e) {
+            console.error('Auto-sync pushToCloud failed:', e);
+        } finally {
+            Engine.__sync.inFlight = false;
+        }
+    }, debounceMs);
+};
+
+// Media detection helpers
+Engine.isVideoFile = function(fileOrTypeOrName) {
+    const type = (typeof fileOrTypeOrName === 'object' && fileOrTypeOrName && fileOrTypeOrName.type) ? fileOrTypeOrName.type : '';
+    const name = (typeof fileOrTypeOrName === 'object' && fileOrTypeOrName && fileOrTypeOrName.name) ? fileOrTypeOrName.name : '';
+    const t = String(type || '').toLowerCase();
+    const n = String(name || '').toLowerCase();
+    if (t.startsWith('video/')) return true;
+    return /\.(mp4|mov|webm|ogg|m4v|avi|mkv)(\?.*)?$/.test(n);
+};
+
+Engine.inferMediaType = function(file) {
+    return Engine.isVideoFile(file) ? 'video' : 'image';
+};
+
+Engine.readFileAsDataURL = function(file) {
+    return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onerror = () => reject(new Error('Failed to read file'));
+        fr.onload = () => resolve(fr.result);
+        fr.readAsDataURL(file);
+    });
+};
+
+Engine.prepareGalleryMediaItem = async function(file, caption) {
+    const type = Engine.inferMediaType(file);
+    const src = await Engine.readFileAsDataURL(file);
+    return {
+        id: 'gal_' + Date.now() + '_' + Math.random().toString(16).slice(2),
+        type,
+        src,
+        caption: String(caption || '').trim(),
+        createdAt: Date.now()
+    };
+};
+
+// Font application for Name + Page Message
+Engine.normalizeFontFamily = function(selValue) {
+    if (!selValue) return "'Nunito'";
+    const v = String(selValue).trim();
+    if ((v.startsWith("'") && v.endsWith("'")) || (v.startsWith('"') && v.endsWith('"'))) return v;
+    return "'" + v.replace(/^'+|'+$/g, '') + "'";
+};
+
+Engine.applyFontToNameAndMessages = function(fontNameFamily, fontMsgFamily) {
+    const famName = Engine.normalizeFontFamily(fontNameFamily);
+    const famMsg = Engine.normalizeFontFamily(fontMsgFamily);
+
+    const nameEl = document.getElementById('ui-n');
+    const storyEl = document.getElementById('ui-story-text');
+    const msgEl = document.getElementById('ui-msg');
+
+    if (nameEl) nameEl.style.fontFamily = famName;
+    if (storyEl) storyEl.style.fontFamily = famMsg;
+    if (msgEl) msgEl.style.fontFamily = famMsg;
+};
+
+window.SanctuaryEngine = Engine;
 
 })();

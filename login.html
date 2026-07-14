@@ -106,9 +106,11 @@ f.addEventListener('submit',function(e){
     var u=document.getElementById('u').value.trim().toLowerCase(),pw=document.getElementById('p').value.trim();
     if(!u||!pw)return;
     b.disabled=true; b.textContent='⏳ Authenticating...'; s.textContent='';
-    SanctuaryEngine.login(u,pw).then(function(){
+    SanctuaryEngine.login(u,pw).then(function(result){
         s.textContent='Welcome back ✨'; s.style.color='#4caf50';
-        setTimeout(function(){window.location.replace('vault.html')},300);
+        var target = 'vault.html';
+        if (result && result.role === 'master') target = 'vault.html#hq';
+        setTimeout(function(){window.location.replace(target)},300);
     }).catch(function(err){
         b.disabled=false; b.textContent='Enter Our World 💖'; s.textContent=err.message; s.style.color='#E91E63';
         c.classList.add('shake'); setTimeout(function(){c.classList.remove('shake')},500);
