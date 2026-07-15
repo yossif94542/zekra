@@ -66,8 +66,15 @@
                 const isMaster = session && (session.role === 'master' || session.id === 'zekra_master');
                 
                 if (isMaster) {
-                    // Open MasterHQ
+                    // Open MasterHQ - explicitly hide shop/checkout overlays first
                     setTimeout(() => {
+                        // HIDE all shop/checkout overlays
+                        const shopOverlay = document.getElementById('shop-overlay');
+                        const rechargeModal = document.getElementById('recharge-modal');
+                        if (shopOverlay) shopOverlay.classList.remove('active');
+                        if (rechargeModal) rechargeModal.classList.remove('active');
+                        
+                        // SHOW MasterHQ
                         const hq = document.getElementById('master-hq-admin');
                         if (hq) {
                             hq.style.display = 'flex';
