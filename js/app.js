@@ -46,6 +46,53 @@
             SanctuaryEngine.checkSession();
         }
 
+        // 4.5. Hash-based routing for MasterHQ
+        if (window.location.hash === '#hq') {
+            // Retry logic to wait for session to be ready
+            const checkAndOpenHQ = function(retries) {
+                retries = retries || 0;
+                
+                // Check session directly instead of isMaster() to avoid async config loading issues
+                let session = typeof SanctuaryEngine !== 'undefined' ? SanctuaryEngine.getCurrentUser() : null;
+                
+                // Fallback: check localStorage directly with the session key
+                if (!session && typeof ZEKRA !== 'undefined' && ZEKRA.SESSION_KEY) {
+                    try {
+                        const raw = localStorage.getItem(ZEKRA.SESSION_KEY);
+                        if (raw) session = JSON.parse(raw);
+                    } catch (e) { /* ignore */ }
+                }
+                
+                const isMaster = session && (session.role === 'master' || session.id === 'zekra_master');
+                
+                if (isMaster) {
+                    // Open MasterHQ
+                    setTimeout(() => {
+                        const hq = document.getElementById('master-hq-admin');
+                        if (hq) {
+                            hq.style.display = 'flex';
+                            hq.classList.add('open');
+                        }
+                        // Clean hash without reload
+                        if (history.replaceState) {
+                            history.replaceState(null, null, 'vault.html');
+                        }
+                    }, 300);
+                } else if (retries < 10) {
+                    // Retry after 200ms if session not ready yet
+                    setTimeout(function() { checkAndOpenHQ(retries + 1); }, 200);
+                } else {
+                    // Non-master tried to access HQ — redirect to normal vault
+                    if (history.replaceState) {
+                        history.replaceState(null, null, 'vault.html');
+                    }
+                    alert('❌ Access Denied: Administrator level required.');
+                }
+            };
+            
+            checkAndOpenHQ(0);
+        }
+
         // 5. Connection test
         window.addEventListener('load', async () => {
             if (typeof SanctuaryEngine !== 'undefined') {
