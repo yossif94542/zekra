@@ -1,0 +1,83 @@
+/* ─── Glass Cards ──────────────────────────────────────── */
+.g-card {
+    background-color: rgba(250, 243, 224, 0.6);
+    backdrop-filter: blur(var(--blur)) !important;
+    border-radius: var(--rad) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.g-pink {
+    background-color: rgba(252, 228, 236, 0.4);
+    backdrop-filter: blur(var(--blur)) !important;
+    border-radius: var(--rad) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 10px 30px rgba(236, 72, 153, 0.1);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* ─── Tinder Deck Cards ────────────────────────────────── */
+.deck {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    display: flex;
+    justify-content: center;
+    perspective: 1000px;
+}
+
+.scard {
+    position: absolute;
+    width: 85%;
+    height: 100%;
+    background: white;
+    border-radius: var(--rad);
+    padding: 10px 10px 12px 10px;
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    transform-origin: 50% 100%;
+    transition: transform 0.3s;
+    cursor: grab;
+    border: 1px solid #f3f4f6;
+}
+
+.scard img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 32px;
+    pointer-events: none;
+}
+
+.scard video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 32px;
+    pointer-events: auto;
+    background-color: #000;
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+.scard.moving,
+.f-drag.actively-dragging {
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.moving {
+    transition: none !important;
+    cursor: grabbing;
+}
+</file_content>
+</write_to_file>
