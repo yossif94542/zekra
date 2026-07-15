@@ -116,6 +116,38 @@ window.ZEKRA = window.ZEKRA || {};
         if (coinsEl) coinsEl.innerText = `🪙 ${state[coinsKey] || 0}`;
     };
 
+    // ─── Auto-Initialize on DOMContentLoaded ──────────────────
+    Fonts.init = function() {
+        const state = ZEKRA.state ? ZEKRA.state.get() : {};
+        if (!state || Object.keys(state).length === 0) {
+            // State not ready yet, retry after a short delay
+            setTimeout(Fonts.init, 500);
+            return;
+        }
+        Fonts.applyLocks();
+        Fonts.applyTheme();
+        Fonts.updateSoulUI();
+        console.log('✅ ZEKRA: FontSystem auto-initialized.');
+    };
+
+    // Listen for state changes to re-apply fonts
+    if (ZEKRA.state && ZEKRA.state.onChange) {
+        ZEKRA.state.onChange(function(prop, value, state) {
+            if (prop === 'p_theme' || prop === 'userNameFont' || prop === 'bigFont' || prop === 'ownedItems') {
+                Fonts.applyLocks();
+                Fonts.applyTheme();
+            }
+        });
+    }
+
     window.ZEKRA.Fonts = Fonts;
+
+    // Auto-init when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', Fonts.init);
+    } else {
+        Fonts.init();
+    }
+
     console.log('✅ ZEKRA: FontSystem loaded.');
 })();

@@ -4,6 +4,20 @@
  */
 window.ZEKRA = window.ZEKRA || {};
 
+// ─── Global uploadVideo for HTML onclick handlers ─────────
+window.uploadVideo = async function(file) {
+    if (!file && typeof arguments[0] === 'object' && arguments[0].target) {
+        file = arguments[0].target.files[0];
+    }
+    if (!file) return null;
+    try {
+        return await ZEKRA.Uploader.upload(file, { maxW: 1920, qual: 0.8 });
+    } catch (e) {
+        console.error('uploadVideo failed:', e);
+        return null;
+    }
+};
+
 (function() {
     'use strict';
 

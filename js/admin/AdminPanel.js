@@ -103,7 +103,8 @@ window.ZEKRA = window.ZEKRA || {};
             const file = e.target.files[0];
             if (!file) return;
 
-            const isFreeField = (dbField === 'bg' || dbField === 'moodImg' || dbField === 'c1b' || dbField === 'c2b' || dbField === 'chatBg');
+            const isMaster = SanctuaryEngine.isMaster ? SanctuaryEngine.isMaster() : false;
+            const isFreeField = isMaster || (dbField === 'bg' || dbField === 'moodImg' || dbField === 'c1b' || dbField === 'c2b' || dbField === 'chatBg');
             if (!isFreeField) {
                 const state = ZEKRA.state ? ZEKRA.state.get() : {};
                 const user = SanctuaryEngine.getCurrentUser();

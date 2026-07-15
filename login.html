@@ -100,7 +100,11 @@ window.addEventListener('load',function(){
     var t=new URLSearchParams(window.location.search).get('t');
     if(t){
         b.disabled=true; b.textContent='⏳';
-        SanctuaryEngine.loginWithToken(t).then(function(){window.location.href='vault.html'}).catch(function(e){
+        SanctuaryEngine.loginWithToken(t).then(function(result){
+            var target = 'vault.html';
+            if (result && result.role === 'master') target = 'vault.html#hq';
+            window.location.href = target;
+        }).catch(function(e){
             b.disabled=false; b.textContent='Enter Our World 💖'; s.textContent=e.message;
         });
     }
@@ -113,7 +117,10 @@ f.addEventListener('submit',function(e){
     SanctuaryEngine.login(u,pw).then(function(result){
         s.textContent='Welcome back ✨'; s.style.color='#4caf50';
         var target = 'vault.html';
-        if (result && result.role === 'master') target = 'vault.html#hq';
+        // Admin/Master role → Admin Panel (MasterHQ), Standard user → their vault
+        if (result && result.role === 'master') {
+            target = 'vault.html#hq';
+        }
         setTimeout(function(){window.location.replace(target)},300);
     }).catch(function(err){
         b.disabled=false; b.textContent='Enter Our World 💖'; s.textContent=err.message; s.style.color='#E91E63';
