@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Zekra Master Reset</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 520px; margin: 40px auto; padding: 0 20px; }
+        pre { background: #111; color: #0f0; padding: 16px; border-radius: 8px; white-space: pre-wrap; }
+        button { padding: 12px 20px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Master Control Reset</h1>
+    <p>One-time tool: wipes are already done for users. This restores <code>admin_config/master</code>.</p>
+    <button id="run">Run Reset</button>
+    <pre id="log">Ready.</pre>
+    <script>
+        const MASTER_USER = 'zekra_master';
+        const MASTER_PASS = 'Master2026!';
+        const logEl = document.getElementById('log');
+        const log = (m) => { logEl.textContent += '\n' + m; console.log(m); };
+
+        document.getElementById('run').onclick = async () => {
+            logEl.textContent = 'Running...';
+            try {
+                const usersSnap = await firebase.database().ref('users').once('value');
+                log('users node: ' + (usersSnap.val() ? Object.keys(usersSnap.val()).join(', ') : '(empty)'));
+
+                const bootstrapEmail = 'bootstrap_reset@zekra.app';
+                const bootstrapPass = 'bootstrap000';
+                const secondary = firebase.initializeApp(firebaseConfig, 'ResetBootstrap');
+
+                try {
+                    await secondary.auth().createUserWithEmailAndPassword(bootstrapEmail, bootstrapPass);
+                    log('Created bootstrap auth user.');
+                } catch (e) {
+                    if (e.code === 'auth/email-already-in-use') {
+                        log('Bootstrap user exists, signing in...');
+                    } else {
+                        throw e;
+                    }
+                }
+
+                await secondary.auth().signInWithEmailAndPassword(bootstrapEmail, bootstrapPass);
+                log('Signed in as bootstrap user.');
+
+                await firebase.database().ref('admin_config/master').set({
+                    u: MASTER_USER,
+                    p: MASTER_PASS,
+                    updatedAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                log('admin_config/master updated.');
+
+                const verify = await firebase.database().ref('admin_config/master').once('value');
+                log('Verified username: ' + verify.val().u);
+
+                log('\nDONE. New Master Control credentials:');
+                log('Username: ' + MASTER_USER);
+                log('Password: ' + MASTER_PASS);
+                log('\nLog in at master.html with these credentials.');
+            } catch (err) {
+                log('ERROR: ' + (err.message || err));
+                log('If permission denied, update Firebase Realtime Database rules or use Firebase Console.');
+            }
+        };
+    </script>
+</body>
+</html>

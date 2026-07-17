@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Zekra | Identity Pair Studio ♂️♀️</title>
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg?v=4.4.0">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script src="firebase-config.js?v=4.3.7"></script>
+    <script src="sanctuary-engine.js?v=4.3.7"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: white;
+            overflow: hidden;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Studio Grid */
+        .studio-container {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            height: 100vh;
+        }
+
+        @media (max-width: 1024px) {
+            .studio-container {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+                height: auto;
+            }
+
+            body {
+                overflow: auto;
+            }
+        }
+
+        /* Form Styling */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-group {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 12px;
+            transition: all 0.2s;
+        }
+
+        .input-group:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .input-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #64748b;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .studio-input {
+            background: transparent;
+            width: 100%;
+            border: none;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            outline: none;
+        }
+
+        /* Card Preview */
+        .card-perspective {
+            perspective: 2000px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 320px;
+            height: 480px;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .is-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background: #1e293b;
+        }
+
+        /* Overlay Text */
+        .overlay-text {
+            position: absolute;
+            font-family: 'JetBrains+Mono', monospace;
+            text-transform: uppercase;
+            pointer-events: none;
+            color: #1e293b;
+            white-space: nowrap;
+        }
+
+        .overlay-photo {
+            position: absolute;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #e2e8f0;
+        }
+
+        /* Specific Template Metrics (Estimated based on standard ID card ratios) */
+        .pos-name {
+            top: 300px;
+            left: 40px;
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .pos-date {
+            top: 355px;
+            left: 40px;
+            font-size: 14px;
+            font-weight: 700;
+            opacity: 0.8;
+        }
+
+        .pos-addr {
+            top: 395px;
+            left: 40px;
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        .pos-mate {
+            top: 435px;
+            left: 40px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #ef4444;
+        }
+
+        .pos-photo {
+            top: 120px;
+            left: 40px;
+            width: 140px;
+            height: 160px;
+        }
+
+        .btn-premium {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-premium:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="studio-container">
+        <!-- LEFT: Sidebar Forms -->
+        <div class="glass-panel h-screen flex flex-col no-scrollbar overflow-y-auto">
+            <div class="p-8 border-b border-white/5">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="ri-shield-user-line text-blue-500 text-2xl"></i>
+                    <h1 class="text-xl font-black italic tracking-tight">IDENTITY BUNDLE</h1>
+                </div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Pair Configuration gen-1</p>
+            </div>
+
+            <div class="p-6 space-y-8 pb-32">
+                <!-- HIS DETAILS -->
+                <section class="space-y-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                            <i class="ri-men-line"></i>
+                        </div>
+                        <h2 class="font-black text-sm uppercase tracking-wider">His Details (Boyfriend)</h2>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Full Name</label>
+                        <input type="text" id="h-name" placeholder="ALEX MERCER" class="studio-input"
+                            oninput="updateCards()">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Identity Date</label>
+                        <input type="text" id="h-date" placeholder="22 . 05 . 2024" class="studio-input"
+                            oninput="updateCards()">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Native Address</label>
+                        <input type="text" id="h-addr" placeholder="CAIRO, EGYPT" class="studio-input"
+                            oninput="updateCards()">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Significant Soul</label>
+                        <input type="text" id="h-mate" placeholder="Marium" class="studio-input"
+                            oninput="updateCards()">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Passport Photo</label>
+                        <input type="file" id="h-photo" class="hidden" accept="image/*"
+                            onchange="handlePhoto(event, 'his')">
+                        <button onclick="document.getElementById('h-photo').click()"
+                            class="text-xs font-bold text-blue-400 hover:text-blue-300">
+                            <i class="ri-upload-cloud-2-line mr-1"></i> Upload Image
+                        </button>
+                    </div>
+                </section>
+
+                <hr class="border-white/5">
+
+                <!-- HER DETAILS -->
+                <section class="space-y-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400">
+                            <i class="ri-women-line"></i>
+                        </div>
+                        <h2 class="font-black text-sm uppercase tracking-wider">Her Details (Girlfriend)</h2>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Full Name</label>
+                        <input type="text" id="g-name" placeholder="MARIUM ZAID" class="studio-input"
+                            oninput="updateCards()">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Identity Date</label>
+                        <input type="text" id="g-date" placeholder="22 . 05 . 2024" class="studio-input"
+                            oninput="updateCards()">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Native Address</label>
+                        <input type="text" id="g-addr" placeholder="CAIRO, EGYPT" class="studio-input"
+                            oninput="updateCards()">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Significant Soul</label>
+                        <input type="text" id="g-mate" placeholder="Alex" class="studio-input" oninput="updateCards()">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Passport Photo</label>
+                        <input type="file" id="g-photo" class="hidden" accept="image/*"
+                            onchange="handlePhoto(event, 'hers')">
+                        <button onclick="document.getElementById('g-photo').click()"
+                            class="text-xs font-bold text-pink-400 hover:text-pink-300">
+                            <i class="ri-upload-cloud-2-line mr-1"></i> Upload Image
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <div class="p-6 mt-auto border-t border-white/5 bg-slate-900/50">
+                <button onclick="submitBundle()"
+                    class="w-full btn-premium py-4 rounded-2xl font-black text-sm tracking-widest uppercase">
+                    Secure the Bundle ✨
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT: Live Preview Area -->
+        <div class="relative flex flex-col items-center justify-center p-12 bg-slate-950 overflow-hidden">
+            <div class="absolute inset-0 opacity-20"
+                style="background-image: radial-gradient(#3b82f6 1px, transparent 1px); background-size: 30px 30px;">
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-12 items-center justify-center relative z-10">
+
+                <!-- BOY CARD -->
+                <div class="card-perspective" id="card-his">
+                    <div class="card-inner">
+                        <div class="card-face card-front">
+                            <img src="assets/template_blue.png" class="w-full h-full">
+                            <img id="prev-h-photo" class="overlay-photo pos-photo">
+                            <div id="prev-h-name" class="overlay-text pos-name">ALEX MERCER</div>
+                            <div id="prev-h-date" class="overlay-text pos-date">22 . 05 . 2024</div>
+                            <div id="prev-h-addr" class="overlay-text pos-addr">CAIRO, EGYPT</div>
+                            <div id="prev-h-mate" class="overlay-text pos-mate">Marium</div>
+                        </div>
+                        <div class="card-face card-back flex items-center justify-center p-8 text-center">
+                            <div class="space-y-4">
+                                <i class="ri-heart-pulse-fill text-6xl text-blue-500"></i>
+                                <h3 class="font-black text-xl italic uppercase">Love Identity</h3>
+                                <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Secured by
+                                    Zekra</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GIRL CARD -->
+                <div class="card-perspective" id="card-hers">
+                    <div class="card-inner">
+                        <div class="card-face card-front">
+                            <img src="assets/template_pink.png" class="w-full h-full">
+                            <img id="prev-g-photo" class="overlay-photo pos-photo">
+                            <div id="prev-g-name" class="overlay-text pos-name">MARIUM ZAID</div>
+                            <div id="prev-g-date" class="overlay-text pos-date">22 . 05 . 2024</div>
+                            <div id="prev-g-addr" class="overlay-text pos-addr">CAIRO, EGYPT</div>
+                            <div id="prev-g-mate" class="overlay-text pos-mate">Alex</div>
+                        </div>
+                        <div class="card-face card-back flex items-center justify-center p-8 text-center">
+                            <div class="space-y-4">
+                                <i class="ri-heart-pulse-fill text-6xl text-pink-500"></i>
+                                <h3 class="font-black text-xl italic uppercase">Love Identity</h3>
+                                <p class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Secured by
+                                    Zekra</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Global Controls Overlay -->
+            <div class="fixed bottom-10 flex gap-4">
+                <button onclick="toggleFlip()"
+                    class="px-8 py-3 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md rounded-full font-black text-xs uppercase tracking-widest transition-all">
+                    <i class="ri-repeat-line mr-2"></i> Flip Both Cards
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let bundleImages = { his: null, hers: null };
+
+        function updateCards() {
+            // His
+            document.getElementById('prev-h-name').innerText = document.getElementById('h-name').value || 'ALEX MERCER';
+            document.getElementById('prev-h-date').innerText = document.getElementById('h-date').value || '22 . 05 . 2024';
+            document.getElementById('prev-h-addr').innerText = document.getElementById('h-addr').value || 'CAIRO, EGYPT';
+            document.getElementById('prev-h-mate').innerText = document.getElementById('h-mate').value || 'Marium';
+
+            // Hers
+            document.getElementById('prev-g-name').innerText = document.getElementById('g-name').value || 'MARIUM ZAID';
+            document.getElementById('prev-g-date').innerText = document.getElementById('g-date').value || '22 . 05 . 2024';
+            document.getElementById('prev-g-addr').innerText = document.getElementById('g-addr').value || 'CAIRO, EGYPT';
+            document.getElementById('prev-g-mate').innerText = document.getElementById('g-mate').value || 'Alex';
+        }
+
+        function handlePhoto(event, card) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target.result;
+                bundleImages[card] = dataUrl;
+                document.getElementById(`prev-${card === 'his' ? 'h' : 'g'}-photo`).src = dataUrl;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function toggleFlip() {
+            document.getElementById('card-his').classList.toggle('is-flipped');
+            document.getElementById('card-hers').classList.toggle('is-flipped');
+        }
+
+        async function submitBundle() {
+            const user = SanctuaryEngine.getCurrentUser();
+            if (!user) {
+                alert("Please log in to preserve your magic!");
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const loader = document.createElement('div');
+            loader.className = "fixed inset-0 z-50 bg-black flex items-center justify-center text-white font-black";
+            loader.innerHTML = "PACKAGING YOUR SOULMATE BUNDLE...";
+            document.body.appendChild(loader);
+
+            try {
+                const bundleId = "bundle_" + Math.random().toString(36).substr(2, 9);
+                const payload = {
+                    orderType: 'Identity Pair Bundle',
+                    his: {
+                        name: document.getElementById('h-name').value,
+                        date: document.getElementById('h-date').value,
+                        address: document.getElementById('h-addr').value,
+                        mate: document.getElementById('h-mate').value,
+                        photo: bundleImages.his
+                    },
+                    hers: {
+                        name: document.getElementById('g-name').value,
+                        date: document.getElementById('g-date').value,
+                        address: document.getElementById('g-addr').value,
+                        mate: document.getElementById('g-mate').value,
+                        photo: bundleImages.hers
+                    },
+                    finalizedAt: new Date().toISOString()
+                };
+
+                // Save to vault as primary record
+                await firebase.database().ref(`users/${user.uid}/cards/${bundleId}`).set({
+                    productionManifest: payload,
+                    lastUpdate: Date.now()
+                });
+
+                // Small delay for drama
+                setTimeout(() => {
+                    window.location.href = `checkout.html?draft_id=${bundleId}`;
+                }, 1000);
+
+            } catch (error) {
+                console.error("Bundle Save Failed:", error);
+                alert("The magic leaked! Try again.");
+                loader.remove();
+            }
+        }
+    </script>
+</body>
+
+</html>
