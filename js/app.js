@@ -18,61 +18,67 @@
     };
 
     // ─── FORCE UI ROUTING — Single Source of Truth ───────────
-    // This function is the authoritative UI state router.
-    // It runs after ALL modules are loaded and Firebase is initialized.
-    // It forcibly locks the UI to the correct state based on user role,
-    // eliminating all race conditions with shop/checkout overlays.
+    // Uses ONLY native CSS classList operations to preserve the
+    // project's CSS layout system. NO raw inline style.display.
+    //
+    // CSS Class System (from vault.css):
+    //   .locked-full-overlay        → display: none (hidden by default)
+    //   .locked-full-overlay.open   → display: flex !important
+    //   .locked-full-overlay.active → display: flex !important
+    //   .overlay                    → display: none
+    //   .overlay.active             → display: flex !important
+    //   .drawer                     → display: none
+    //   .drawer.open-l / .open-r    → display: flex !important
+    //   .hidden                     → display: none (Tailwind utility)
     App.forceUIRouting = function() {
         try {
             const isMaster = typeof SanctuaryEngine !== 'undefined' && SanctuaryEngine.isMaster();
-            
-            // Get all critical UI elements
+
+            // ─── Step 1: Force-hide ALL overlay/drawer elements ───
+            // Shop & Checkout (use CSS class system - remove .active to hide)
             const shopOverlay = document.getElementById('shop-overlay');
             const rechargeModal = document.getElementById('recharge-modal');
+            if (shopOverlay) shopOverlay.classList.remove('active');
+            if (rechargeModal) rechargeModal.classList.remove('active');
+
+            // Master HQ (use CSS class system - remove .open to hide)
             const masterHQ = document.getElementById('master-hq-admin');
-            const userVault = document.getElementById('app-v');
+            if (masterHQ) masterHQ.classList.remove('open');
+
+            // Admin Panel (also .locked-full-overlay)
             const adminPanel = document.getElementById('admin-panel');
-            
-            // ─── ALWAYS hide shop/checkout first (defense in depth) ───
-            if (shopOverlay) {
-                shopOverlay.style.display = 'none';
-                shopOverlay.classList.remove('active', 'open');
-            }
-            if (rechargeModal) {
-                rechargeModal.style.display = 'none';
-                rechargeModal.classList.remove('active', 'open');
-            }
-            
-            // ─── FORCE correct UI based on role ───
+            if (adminPanel) adminPanel.classList.remove('open');
+
+            // Drawers (journey, sketchbook, emergency)
+            const jnDrawer = document.getElementById('jn-d');
+            const skDrawer = document.getElementById('sk-d');
+            const emgDrawer = document.getElementById('o-emg');
+            if (jnDrawer) { jnDrawer.classList.remove('open-l', 'active'); }
+            if (skDrawer) { skDrawer.classList.remove('open-r', 'active'); }
+            if (emgDrawer) { emgDrawer.classList.remove('active', 'show'); }
+
+            // Profile/Chat overlay
+            const profileOverlay = document.getElementById('profile-overlay');
+            if (profileOverlay) { profileOverlay.classList.remove('show', 'active'); }
+
+            // User vault main container (use Tailwind .hidden class)
+            const userVault = document.getElementById('app-v');
+            if (userVault) userVault.classList.add('hidden');
+
+            // ─── Step 2: Activate ONLY the correct view ───
             if (isMaster) {
-                // ADMIN VIEW: Show MasterHQ, hide user vault
-                if (masterHQ) {
-                    masterHQ.style.display = 'flex';
-                    masterHQ.classList.add('open');
-                }
-                if (userVault) {
-                    userVault.style.display = 'none';
-                }
-                if (adminPanel) {
-                    adminPanel.style.display = 'none';
-                    adminPanel.classList.remove('open');
-                }
+                // === ADMIN VIEW ===
+                // Show MasterHQ only (its CSS background is #0D0B10 dark)
+                if (masterHQ) masterHQ.classList.add('open');
+                // User vault stays hidden (classList.add('hidden') already applied above)
             } else {
-                // USER VIEW: Show user vault, hide MasterHQ
-                if (masterHQ) {
-                    masterHQ.style.display = 'none';
-                    masterHQ.classList.remove('open');
-                }
-                if (userVault) {
-                    userVault.style.display = 'flex';
-                }
-                if (adminPanel) {
-                    adminPanel.style.display = 'none';
-                    adminPanel.classList.remove('open');
-                }
+                // === USER VIEW ===
+                // Show user vault
+                if (userVault) userVault.classList.remove('hidden');
+                // MasterHQ stays hidden (classList.remove('open') already applied above)
             }
-            
-            console.log('✅ ZEKRA: UI routing enforced (isMaster=' + isMaster + ')');
+
+            console.log('✅ ZEKRA: UI routing enforced via classList (isMaster=' + isMaster + ')');
         } catch (e) {
             console.warn('ZEKRA: forceUIRouting error (non-fatal):', e);
         }
@@ -127,7 +133,7 @@
                 const isMaster = session && (session.role === 'master' || session.id === 'zekra_master');
                 
                 if (isMaster) {
-                    // Use the authoritative forceUIRouting instead of manual DOM manipulation
+                    // Use the authoritative classList-based forceUIRouting
                     App.forceUIRouting();
                     // Clean hash without reload
                     if (history.replaceState) {
