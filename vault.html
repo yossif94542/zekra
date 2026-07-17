@@ -5533,6 +5533,7 @@
 
 
             // ✅ CACHE ONLY: localStorage is a fallback cache, NOT the source of truth
+            let _syncingFromCloud = false; // Prevent cloud-triggered updates from pushing back to cloud
             const svDB = () => {
                 try {
                     localStorage.setItem(DB_ID, JSON.stringify(vaultState));
@@ -5548,6 +5549,12 @@
 
             // ✅ CLOUD PUSH: used after intentional edits (Save/Sync)
             const pushToCloud = async () => {
+                // Skip push if we're currently syncing FROM cloud (prevents overwrite loop)
+                if (_syncingFromCloud) {
+                    console.log('🔵 ZEKRA: Cloud push skipped — syncing from cloud.');
+                    return;
+                }
+                
                 const vaultId = SanctuaryEngine.getActiveUID();
                 if (!vaultId || vaultId === 'undefined' || vaultId === 'null') {
                     console.warn('ZEKRA: Cloud push skipped — no valid UID.');
@@ -5601,6 +5608,9 @@
                     SanctuaryEngine.listenToVault(vaultId, vaultData => {
                         const data = vaultData.data;
                         if (data) {
+                            // 🔐 MASTER OVERWRITE FIX: Set flag to prevent pushToCloud loop
+                            _syncingFromCloud = true;
+                            
                             // Source of Truth: Merge Cloud data into Local State
                             vaultState = Object.assign({}, DEF, data);
                             localStorage.setItem(DB_ID, JSON.stringify(vaultState));
@@ -5612,9 +5622,13 @@
                                 }
                                 buildUI();
                                 if (vaultState.c) updateGlobalBranding(vaultState.c);
+                                
+                                // Release cloud sync lock after UI is built
+                                setTimeout(() => { _syncingFromCloud = false; }, 100);
                             }).catch(() => {
                                 buildUI();
                                 if (vaultState.c) updateGlobalBranding(vaultState.c);
+                                setTimeout(() => { _syncingFromCloud = false; }, 100);
                             });
                         } else {
                             // HEALING LOGIC: If cloud is empty but local has data, auto-sync to Cloud
