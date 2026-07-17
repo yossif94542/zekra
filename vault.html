@@ -832,7 +832,7 @@
     </div>
 
     <!-- STORE OVERLAY -->
-    <div id="shop-overlay" class="locked-full-overlay" onclick="if(event.target===this)ZEKRA.closeAll()">
+    <div id="shop-overlay" class="locked-full-overlay" style="display: none !important;" onclick="if(event.target===this)ZEKRA.closeAll()">
         <div id="shop-container">
             <div class="shop-header">
                 <div class="flex flex-col">
@@ -864,7 +864,7 @@
     </div>
 
     <!-- Checkout Modal -->
-    <div id="recharge-modal" class="overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(20px);z-index:110000;align-items:center;justify-content:center;padding:20px;font-family:'Inter',sans-serif;">
+    <div id="recharge-modal" class="overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(20px);z-index:110000;align-items:center;justify-content:center;padding:20px;font-family:'Inter',sans-serif;display:none!important;">
         <div class="checkout-box bg-white rounded-[35px] w-full max-w-[420px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative overflow-hidden flex flex-col">
             <div class="px-8 pt-8 pb-4 flex items-center justify-between border-b border-gray-100">
                 <i class="ri-arrow-left-line text-xl cursor-pointer text-gray-800" onclick="ZEKRA.closeAll()"></i>

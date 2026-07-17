@@ -17,6 +17,67 @@
         isLowPower: ZEKRA.isLowPower()
     };
 
+    // ─── FORCE UI ROUTING — Single Source of Truth ───────────
+    // This function is the authoritative UI state router.
+    // It runs after ALL modules are loaded and Firebase is initialized.
+    // It forcibly locks the UI to the correct state based on user role,
+    // eliminating all race conditions with shop/checkout overlays.
+    App.forceUIRouting = function() {
+        try {
+            const isMaster = typeof SanctuaryEngine !== 'undefined' && SanctuaryEngine.isMaster();
+            
+            // Get all critical UI elements
+            const shopOverlay = document.getElementById('shop-overlay');
+            const rechargeModal = document.getElementById('recharge-modal');
+            const masterHQ = document.getElementById('master-hq-admin');
+            const userVault = document.getElementById('app-v');
+            const adminPanel = document.getElementById('admin-panel');
+            
+            // ─── ALWAYS hide shop/checkout first (defense in depth) ───
+            if (shopOverlay) {
+                shopOverlay.style.display = 'none';
+                shopOverlay.classList.remove('active', 'open');
+            }
+            if (rechargeModal) {
+                rechargeModal.style.display = 'none';
+                rechargeModal.classList.remove('active', 'open');
+            }
+            
+            // ─── FORCE correct UI based on role ───
+            if (isMaster) {
+                // ADMIN VIEW: Show MasterHQ, hide user vault
+                if (masterHQ) {
+                    masterHQ.style.display = 'flex';
+                    masterHQ.classList.add('open');
+                }
+                if (userVault) {
+                    userVault.style.display = 'none';
+                }
+                if (adminPanel) {
+                    adminPanel.style.display = 'none';
+                    adminPanel.classList.remove('open');
+                }
+            } else {
+                // USER VIEW: Show user vault, hide MasterHQ
+                if (masterHQ) {
+                    masterHQ.style.display = 'none';
+                    masterHQ.classList.remove('open');
+                }
+                if (userVault) {
+                    userVault.style.display = 'flex';
+                }
+                if (adminPanel) {
+                    adminPanel.style.display = 'none';
+                    adminPanel.classList.remove('open');
+                }
+            }
+            
+            console.log('✅ ZEKRA: UI routing enforced (isMaster=' + isMaster + ')');
+        } catch (e) {
+            console.warn('ZEKRA: forceUIRouting error (non-fatal):', e);
+        }
+    };
+
     // ─── Initialize ──────────────────────────────────────────
     App.init = async function() {
         if (App.initialized) return;
@@ -66,25 +127,12 @@
                 const isMaster = session && (session.role === 'master' || session.id === 'zekra_master');
                 
                 if (isMaster) {
-                    // Open MasterHQ - explicitly hide shop/checkout overlays first
-                    setTimeout(() => {
-                        // HIDE all shop/checkout overlays
-                        const shopOverlay = document.getElementById('shop-overlay');
-                        const rechargeModal = document.getElementById('recharge-modal');
-                        if (shopOverlay) shopOverlay.classList.remove('active');
-                        if (rechargeModal) rechargeModal.classList.remove('active');
-                        
-                        // SHOW MasterHQ
-                        const hq = document.getElementById('master-hq-admin');
-                        if (hq) {
-                            hq.style.display = 'flex';
-                            hq.classList.add('open');
-                        }
-                        // Clean hash without reload
-                        if (history.replaceState) {
-                            history.replaceState(null, null, 'vault.html');
-                        }
-                    }, 300);
+                    // Use the authoritative forceUIRouting instead of manual DOM manipulation
+                    App.forceUIRouting();
+                    // Clean hash without reload
+                    if (history.replaceState) {
+                        history.replaceState(null, null, 'vault.html');
+                    }
                 } else if (retries < 10) {
                     // Retry after 200ms if session not ready yet
                     setTimeout(function() { checkAndOpenHQ(retries + 1); }, 200);
@@ -100,8 +148,11 @@
             checkAndOpenHQ(0);
         }
 
-        // 5. Connection test
+        // 5. Connection test + force UI routing on full load
         window.addEventListener('load', async () => {
+            // Force UI routing after everything is fully loaded
+            App.forceUIRouting();
+            
             if (typeof SanctuaryEngine !== 'undefined') {
                 const connected = await SanctuaryEngine.testConnection();
                 if (!connected) {
@@ -109,6 +160,11 @@
                 }
             }
         });
+
+        // 6. Force UI routing after init completes (with small delay for modules to settle)
+        setTimeout(function() {
+            App.forceUIRouting();
+        }, 500);
 
         console.log(`✅ ZEKRA App v${App.version} initialized.`);
         return App;
