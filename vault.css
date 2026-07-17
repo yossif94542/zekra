@@ -1,16 +1,5 @@
 /* Zekra Vault CSS */
 
-/* Force shop and checkout overlays to be hidden by default to prevent rogue display */
-#shop-overlay,
-#recharge-modal {
-    display: none !important;
-}
-
-#shop-overlay.active,
-#recharge-modal.active {
-    display: flex !important;
-}
-
     /* Global Core Variables */
     :root {
         --bg: #FCE4EC;
@@ -2786,48 +2775,50 @@
         100% {
             transform: translateY(100vh) scale(0.5) rotate(720deg);
             opacity: 0;
+        }
+    }
 
-            .animated-placeholder {
-                animation: pulseText 2s infinite;
-                background: linear-gradient(90deg, #FF7096, #ffb6c1, #FF7096);
-                background-size: 200% auto;
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                font-weight: 900;
-            }
+    .animated-placeholder {
+        animation: pulseText 2s infinite;
+        background: linear-gradient(90deg, #FF7096, #ffb6c1, #FF7096);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 900;
+    }
 
-            @keyframes pulseText {
-                0% {
-                    background-position: 0% center;
-                    transform: scale(1);
-                }
+    @keyframes pulseText {
+        0% {
+            background-position: 0% center;
+            transform: scale(1);
+        }
 
-                50% {
-                    background-position: 100% center;
-                    transform: scale(1.05);
-                }
+        50% {
+            background-position: 100% center;
+            transform: scale(1.05);
+        }
 
-                100% {
-                    background-position: 0% center;
-                    transform: scale(1);
-                }
-            }
+        100% {
+            background-position: 0% center;
+            transform: scale(1);
+        }
+    }
 
-            .media-placeholder {
-                border: 2px dashed #FF7096;
-                background: rgba(255, 112, 150, 0.05);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                color: #FF7096;
-                border-radius: 32px;
-                min-height: 200px;
-                font-weight: bold;
-                padding: 20px;
-                text-align: center;
-            }
-
+    .media-placeholder {
+        border: 2px dashed #FF7096;
+        background: rgba(255, 112, 150, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #FF7096;
+        border-radius: 32px;
+        min-height: 200px;
+        font-weight: bold;
+        padding: 20px;
+        text-align: center;
+    }
 
     /* TRUE FULL SCREEN & SAFE AREA FOR ALL MENUS */
     #admin-panel,
@@ -2972,16 +2963,18 @@
         }
     }
 
-    #ai-note {
-        font-family: 'Indie Flower', cursive !important;
-    }
 
-    body::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><path d='M2,6 L2,8 L0,8 L0,12 L2,12 L2,14 L4,14 L4,16 L6,16 L6,18 L10,18 L10,16 L12,16 L12,14 L14,14 L14,12 L16,12 L16,8 L14,8 L14,6 L12,6 L12,4 L10,4 L10,2 L6,2 L6,4 L4,4 L4,6 Z' fill='%23ffb6c1' opacity='0.08'/></svg>");
-        background-size: 80px;
-        z-index: -5;
-        pointer-events: none;
-    }
+                #ai-note {
+                    font-family: 'Indie Flower', cursive !important;
+                }
+
+                body::before {
+                    content: "";
+                    position: fixed;
+                    inset: 0;
+                    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><path d='M2,6 L2,8 L0,8 L0,12 L2,12 L2,14 L4,14 L4,16 L6,16 L6,18 L10,18 L10,16 L12,16 L12,14 L14,14 L14,12 L16,12 L16,8 L14,8 L14,6 L12,6 L12,4 L10,4 L10,2 L6,2 L6,4 L4,4 L4,6 Z' fill='%23ffb6c1' opacity='0.08'/></svg>");
+                    background-size: 80px;
+                    z-index: -5;
+                    pointer-events: none;
+                }
+            
