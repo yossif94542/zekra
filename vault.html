@@ -1,7 +1,6 @@
-
-<!DOCTYPE html>
-<html lang="en">
-
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <!-- Content Security Policy: Resolve CSP/CORB & eval blocks -->
 <meta http-equiv="Content-Security-Policy"
     content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://www.gstatic.com https://*.firebaseio.com https://*.firebasedatabase.app https://*.firebaseapp.com https://apis.google.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https: *.googleusercontent.com *.firebasestorage.googleapis.com; connect-src 'self' https: wss: *.firebaseio.com *.firebasedatabase.app *.firebaseapp.com;">
@@ -26,14 +25,6 @@
     href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Nunito:wght@400;600;800;900&family=Poppins:wght@400;500;600&family=Cairo:wght@700;900&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap"
     rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
-<script>
-    // Suppress Tailwind warning
-    const originalWarn = console.warn;
-    console.warn = (...args) => {
-        if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) return;
-        originalWarn(...args);
-    };
-</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
