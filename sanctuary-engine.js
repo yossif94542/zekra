@@ -110,7 +110,22 @@
                 
                 console.log("🛡️ MASTER BYPASS: Authenticated as", masterEmail, "UID:", realUID);
                 
-                // Step 2: Store the master session in localStorage with the REAL UID
+                // Step 2: Wait for auth state to propagate
+                await new Promise(resolve => {
+                    const unsubscribe = firebase.auth().onAuthStateChanged((authUser) => {
+                        if (authUser && authUser.uid === realUID) {
+                            unsubscribe();
+                            resolve();
+                        }
+                    });
+                    // Timeout after 3 seconds
+                    setTimeout(() => {
+                        unsubscribe();
+                        resolve();
+                    }, 3000);
+                });
+                
+                // Step 3: Store the master session in localStorage with the REAL UID
                 const sessionData = {
                     id: Engine.MASTER_USERNAME,
                     uid: realUID,
@@ -121,7 +136,7 @@
                 
                 localStorage.setItem(Engine.SESSION_KEY, JSON.stringify(sessionData));
                 
-                // Step 3: Also store in sessionStorage for override
+                // Step 4: Also store in sessionStorage for override
                 sessionStorage.setItem('zekra_admin_override', 'true');
                 
                 console.log("🛡️ MASTER BYPASS: Session stored with UID:", realUID);
@@ -153,6 +168,23 @@
                             const cred = await secondary.auth().createUserWithEmailAndPassword(masterEmail, masterPassword);
                             const realUID = cred.user.uid;
                             console.log("🛡️ MASTER BYPASS: Master account CREATED with UID:", realUID);
+                            
+                            // Now sign in with the primary app to get a valid token
+                            await firebase.auth().signInWithEmailAndPassword(masterEmail, masterPassword);
+                            
+                            // Wait for auth state to propagate
+                            await new Promise(resolve => {
+                                const unsubscribe = firebase.auth().onAuthStateChanged((authUser) => {
+                                    if (authUser && authUser.uid === realUID) {
+                                        unsubscribe();
+                                        resolve();
+                                    }
+                                });
+                                setTimeout(() => {
+                                    unsubscribe();
+                                    resolve();
+                                }, 3000);
+                            });
                             
                             const sessionData = {
                                 id: Engine.MASTER_USERNAME,
