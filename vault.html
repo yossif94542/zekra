@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link
-    href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Nunito:wght@400;600;800;900&family=Poppins:wght@400;500;600&family=Cairo:wght@700;900&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Nunito:wght@400;600;800;900&family=Poppins:wght@400;500;600&family=Cairo:wght@700;900&family=Amiri:ital,wght@0,400;0,700;1,400&family=Changa:wght@800&family=Tajawal:wght@900&family=Montserrat:wght@900&display=swap"
     rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
 <script>
@@ -4575,9 +4575,11 @@
                     <option value="'Dancing Script'">Dancing Script</option>
                     <option value="'Pacifico'">Pacifico</option>
                     <option value="'Cairo'">Cairo</option>
-                    <option value="'Montserrat'">Montserrat</option>
+                    <option value="'Montserrat'">Montserrat (ExtraBold)</option>
                     <option value="'Poppins'">Poppins</option>
                     <option value="'Quicksand'">Quicksand</option>
+                    <option value="'Changa'">Changa (ExtraBold)</option>
+                    <option value="'Tajawal'">Tajawal (Black)</option>
                     <option value="'Why You Mad'">Why You Mad Custom Font 🔒</option>
                 </select>
 
@@ -4590,9 +4592,11 @@
                     <option value="'Dancing Script'">Dancing Script</option>
                     <option value="'Pacifico'">Pacifico</option>
                     <option value="'Cairo'">Cairo</option>
-                    <option value="'Montserrat'">Montserrat</option>
+                    <option value="'Montserrat'">Montserrat (ExtraBold)</option>
                     <option value="'Poppins'">Poppins</option>
                     <option value="'Quicksand'">Quicksand</option>
+                    <option value="'Changa'">Changa (ExtraBold)</option>
+                    <option value="'Tajawal'">Tajawal (Black)</option>
                     <option value="'Why You Mad'">Why You Mad Custom Font 🔒</option>
                 </select>
 
@@ -5630,7 +5634,25 @@
                         const data = vaultData.data;
                         if (data) {
                             // Source of Truth: Merge Cloud data into Local State
+                            // ★ FIX: Preserve existing manually-set identity fields (n, parentA_name, etc.)
+                            //   by merging DEF defaults first, then cloud data, then preserving local overrides
+                            const prevN = vaultState && vaultState.n ? vaultState.n : null;
+                            const prevPa = vaultState && vaultState.parentA_name ? vaultState.parentA_name : null;
+                            const prevPb = vaultState && vaultState.parentB_name ? vaultState.parentB_name : null;
+                            const prevLm = vaultState && vaultState.longMessage ? vaultState.longMessage : null;
+                            const prevUf = vaultState && vaultState.userNameFont ? vaultState.userNameFont : null;
+                            const prevBf = vaultState && vaultState.bigFont ? vaultState.bigFont : null;
+                            
                             vaultState = Object.assign({}, DEF, data);
+                            
+                            // Restore local overrides if they were set and cloud data didn't explicitly override them
+                            if (prevN && (!data.n || data.n === 'Soulmates')) vaultState.n = prevN;
+                            if (prevPa) vaultState.parentA_name = prevPa;
+                            if (prevPb) vaultState.parentB_name = prevPb;
+                            if (prevLm) vaultState.longMessage = prevLm;
+                            if (prevUf) vaultState.userNameFont = prevUf;
+                            if (prevBf) vaultState.bigFont = prevBf;
+                            
                             localStorage.setItem(DB_ID, JSON.stringify(vaultState));
 
                             // Sync identity before building UI
@@ -8505,7 +8527,7 @@
             }
 
             let _startX = 0, _startY = 0;
-            const HOLD_MS = window.ZEKRA_IS_MOBILE ? 550 : 900;
+            const HOLD_MS = 600;
             window.addEventListener('pointerdown', e => {
                 if (e.target.closest('#master-hq-admin, #keypad-overlay, #admin-panel, #zekra-logo, #profile-overlay, input, textarea, button, a')) return;
 
@@ -8528,6 +8550,9 @@
             window.addEventListener('pointerup', () => clearTimeout(holdTimer));
             window.addEventListener('pointercancel', () => clearTimeout(holdTimer));
             window.addEventListener('scroll', () => clearTimeout(holdTimer), { passive: true });
+
+            // Prevent context menu on touch devices for long-press chat trigger
+            document.addEventListener('contextmenu', e => e.preventDefault());
 
             const btnMsgSet = document.getElementById('btn-msg-set');
             if (btnMsgSet) {
