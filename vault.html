@@ -5525,13 +5525,15 @@
             // ★ FONT DROPDOWN FIX: Dynamically inject Google Font + apply to preview elements immediately
             window.handleFontSelect = function(selectEl, vaultKey, targetElId) {
                 const fontVal = selectEl.value;
-                // 1. Save to vaultState
-                vaultState[vaultKey] = fontVal;
-                // 2. Apply fontFamily immediately to the target preview element
-                const targetEl = document.getElementById(targetElId);
-                if (targetEl) {
-                    targetEl.style.fontFamily = fontVal;
-                }
+                // 1. Save to vaultState for both keys so every section shares the same font
+                vaultState['userNameFont'] = fontVal;
+                vaultState['bigFont'] = fontVal;
+                // 2. Apply fontFamily immediately to ALL text sections
+                const allTargets = ['ui-n', 'ui-msg', 'ui-story-text'];
+                allTargets.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.fontFamily = fontVal;
+                });
                 // 3. Dynamically load the Google Font stylesheet if not already loaded
                 // Strip quotes and extract the clean font name
                 const cleanName = fontVal.replace(/'/g, '').replace(/"/g, '');
