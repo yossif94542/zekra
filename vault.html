@@ -1574,15 +1574,21 @@
 
     /* Messenger Footer Replacement (Image Style) */
     .msg-footer {
+        position: fixed !important;
+        bottom: 70px !important;
+        left: 0 !important;
+        width: 100% !important;
+        max-width: 500px !important;
+        margin: 0 auto !important;
+        right: 0 !important;
         padding: 10px 16px calc(24px + env(safe-area-inset-bottom, 0px));
         display: flex;
         align-items: center;
         gap: 12px;
         background: #ffffff;
         border-top: 1px solid rgba(0,0,0,0.05);
-        z-index: 50;
+        z-index: 9999 !important;
         flex-shrink: 0;
-        position: relative;
     }
 
     .msg-btn-plus {
@@ -5654,6 +5660,14 @@
                             if (prevLm) vaultState.longMessage = prevLm;
                             if (prevUf) vaultState.userNameFont = prevUf;
                             if (prevBf) vaultState.bigFont = prevBf;
+                            
+                            // ★ FIX: Update dynamic display elements immediately from cloud data
+                            const paEl = document.getElementById('parent-a-name');
+                            const pbEl = document.getElementById('parent-b-name');
+                            const storyEl = document.getElementById('ui-story-text');
+                            if (data.parentA_name && paEl) paEl.textContent = data.parentA_name;
+                            if (data.parentB_name && pbEl) pbEl.textContent = data.parentB_name;
+                            if (data.w && storyEl) storyEl.innerHTML = data.w;
                             
                             localStorage.setItem(DB_ID, JSON.stringify(vaultState));
 
