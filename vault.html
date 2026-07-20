@@ -4569,7 +4569,8 @@
                 <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block tracking-widest">Name
                     Font</label>
                 <select id="user-name-font"
-                    class="w-full bg-gray-50 rounded-[20px] p-4 font-bold outline-none mb-4 shadow-sm">
+                    class="w-full bg-gray-50 rounded-[20px] p-4 font-bold outline-none mb-4 shadow-sm"
+                    onchange="handleFontSelect(this, 'userNameFont', 'ui-n')">
                     <option value="'Nunito'">Nunito (Default)</option>
                     <option value="'Dancing Script'">Dancing Script</option>
                     <option value="'Pacifico'">Pacifico</option>
@@ -4583,7 +4584,8 @@
                 <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block tracking-widest">Header
                     Font (Message)</label>
                 <select id="big-msg-font"
-                    class="w-full bg-gray-50 rounded-[20px] p-4 font-bold outline-none mb-6 shadow-sm">
+                    class="w-full bg-gray-50 rounded-[20px] p-4 font-bold outline-none mb-6 shadow-sm"
+                    onchange="handleFontSelect(this, 'bigFont', 'ui-msg')">
                     <option value="'Nunito'">Nunito (Default)</option>
                     <option value="'Dancing Script'">Dancing Script</option>
                     <option value="'Pacifico'">Pacifico</option>
@@ -5515,6 +5517,32 @@
                     el.style.display = state ? 'flex' : 'none';
                 }
             }
+
+            // ★ FONT DROPDOWN FIX: Dynamically inject Google Font + apply to preview elements immediately
+            window.handleFontSelect = function(selectEl, vaultKey, targetElId) {
+                const fontVal = selectEl.value;
+                // 1. Save to vaultState
+                vaultState[vaultKey] = fontVal;
+                // 2. Apply fontFamily immediately to the target preview element
+                const targetEl = document.getElementById(targetElId);
+                if (targetEl) {
+                    targetEl.style.fontFamily = fontVal;
+                }
+                // 3. Dynamically load the Google Font stylesheet if not already loaded
+                // Strip quotes and extract the clean font name
+                const cleanName = fontVal.replace(/'/g, '').replace(/"/g, '');
+                const linkId = 'zk-font-' + cleanName.replace(/\s+/g, '-').toLowerCase();
+                if (!document.getElementById(linkId)) {
+                    const link = document.createElement('link');
+                    link.id = linkId;
+                    link.rel = 'stylesheet';
+                    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(cleanName)}&display=swap`;
+                    document.head.appendChild(link);
+                }
+                // 4. Save to localStorage/cloud
+                svDB();
+                pushToCloud();
+            };
 
             // GESTURE & IDENTITY MASTER ENGINE 🏎️
             const ref = (db, path) => db.ref(path);
@@ -8168,6 +8196,8 @@
                         let content = '';
                         if (data.type === 'image') {
                             content = `<img src="${data.url}" loading="lazy" class="msg-img" onclick="window.open('${data.url}')">`;
+                        } else if (data.type === 'video') {
+                            content = `<video src="${data.url}" controls playsinline preload="metadata" class="msg-img" style="max-height:300px;border-radius:15px;background:#000;"></video>`;
                         } else if (data.type === 'audio') {
                             content = `
                         <div class="flex items-center gap-2 w-[220px] cursor-pointer rounded-[20px] bg-white/20 backdrop-blur-sm md:backdrop-blur-sm pr-3 pl-1 py-1 relative overflow-hidden" onclick = "playVoiceMsg('${m.key}', '${data.url}')" >
@@ -8215,7 +8245,7 @@
                 });
             }
 
-            // MEDIA UPLOADS (Image Send)
+            // MEDIA UPLOADS (Image & Video Send)
             const imgBtn = document.getElementById('msg-img-btn');
             const fileIn = document.getElementById('msg-file-input');
             if (imgBtn && fileIn) {
@@ -8225,10 +8255,18 @@
                     if (!file) return;
                     triggerGlobalLoading(true);
                     try {
-                        const blob = await compressToBlob(file, 800, 0.7);
-                        const path = `chat_media/${currentUser}/img_${Date.now()}.jpg`;
-                        const url = await uploadToStorage(blob, path);
-                        postToChat({ type: 'image', url: url });
+                        // VIDEO: Skip compression, upload raw file direct to Cloudinary
+                        if (file.type.startsWith('video/')) {
+                            const path = `chat_media/${currentUser}/vid_${Date.now()}.mp4`;
+                            const url = await uploadToStorage(file, path);
+                            postToChat({ type: 'video', url: url });
+                        } else {
+                            // IMAGE: Compress then upload
+                            const blob = await compressToBlob(file, 800, 0.7);
+                            const path = `chat_media/${currentUser}/img_${Date.now()}.jpg`;
+                            const url = await uploadToStorage(blob, path);
+                            postToChat({ type: 'image', url: url });
+                        }
                     } catch (err) {
                         console.error("Chat Upload Failed:", err);
                         alert("Media Sync Failed. Please check connection.");
