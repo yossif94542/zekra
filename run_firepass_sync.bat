@@ -7,7 +7,7 @@ echo.
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] Python is not installed or not in your system PATH!
-    echo Please install Python to run this synchronizer.
+    echo Please install Python (3.x recommended) to run this synchronizer.
     echo.
     pause
     exit /b

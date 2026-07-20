@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 <!-- Content Security Policy: Resolve CSP/CORB & eval blocks -->
 <meta http-equiv="Content-Security-Policy"
     content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://www.gstatic.com https://*.firebaseio.com https://*.firebasedatabase.app https://*.firebaseapp.com https://apis.google.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https: *.googleusercontent.com *.firebasestorage.googleapis.com; connect-src 'self' https: wss: *.firebaseio.com *.firebasedatabase.app *.firebaseapp.com;">
@@ -27,6 +25,14 @@
     href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Nunito:wght@400;600;800;900&family=Poppins:wght@400;500;600&family=Cairo:wght@700;900&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap"
     rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+<script>
+    // Suppress Tailwind warning
+    const originalWarn = console.warn;
+    console.warn = (...args) => {
+        if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) return;
+        originalWarn(...args);
+    };
+</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -40,25 +46,15 @@
 <script src="sanctuary-engine.js?v=4.3.7"></script>
 <script>
     // --- ROUTE GUARDIAN ---
-    // Wait for Firebase to be fully initialized before checking session
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-            SanctuaryEngine.checkSession();
-        } else {
-            console.error("Firebase not initialized - cannot check session");
-        }
-    });
+    SanctuaryEngine.checkSession();
 
     // Connectivity Diagnostic
     window.addEventListener('load', async () => {
-        if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-            const connected = await SanctuaryEngine.testConnection();
-            if (!connected) {
-                console.warn("ZEKRA: Firebase heartbeat failed. Checking for domain blocks...");
-            }
+        const connected = await SanctuaryEngine.testConnection();
+        if (!connected) {
+            console.warn("ZEKRA: Firebase heartbeat failed. Checking for domain blocks...");
         }
     });
-
 </script>
 
     <style>
@@ -480,53 +476,52 @@
 
         0%,
         100% {
-            transform: translateY(100vh) scale(0.5) rotate(720deg);
-            opacity: 0;
-        }
-    }
-
-    .animated-placeholder {
-        animation: pulseText 2s infinite;
-        background: linear-gradient(90deg, #FF7096, #ffb6c1, #FF7096);
-        background-size: 200% auto;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 900;
-    }
-
-    @keyframes pulseText {
-        0% {
-            background-position: 0% center;
             transform: scale(1);
+            box-shadow: 0 0 10px rgba(236, 72, 153, 0.3);
         }
 
         50% {
-            background-position: 100% center;
-            transform: scale(1.05);
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 0 40px rgba(236, 72, 153, 0.8);
+        }
+    }
+
+    .vibrate-pink {
+        animation: heartVibrateGlow 0.15s infinite ease-in-out !important;
+    }
+
+    @keyframes screenStrobe {
+        0% {
+            background: rgba(255, 255, 255, 0);
+        }
+
+        50% {
+            background: rgba(255, 192, 203, 0.4);
         }
 
         100% {
-            background-position: 0% center;
-            transform: scale(1);
+            background: rgba(255, 255, 255, 0);
         }
     }
 
-    .media-placeholder {
-        border: 2px dashed #FF7096;
-        background: rgba(255, 112, 150, 0.05);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: #FF7096;
-        border-radius: 32px;
-        min-height: 200px;
-        font-weight: bold;
-        padding: 20px;
-        text-align: center;
+    .strobe-active::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        animation: screenStrobe 0.15s infinite;
+        pointer-events: none;
     }
 
-    .intense-scale {
+    @keyframes heartScaleIntense {
+        0% {
+            transform: scale(1);
+        }
+
+        100% {
+            transform: scale(2.2);
+        }
+    }
 
     .intense-scale {
         animation: heartScaleIntense 0.4s infinite alternate ease-in-out !important;
@@ -5538,7 +5533,6 @@
 
 
             // ✅ CACHE ONLY: localStorage is a fallback cache, NOT the source of truth
-            let _syncingFromCloud = false; // Prevent cloud-triggered updates from pushing back to cloud
             const svDB = () => {
                 try {
                     localStorage.setItem(DB_ID, JSON.stringify(vaultState));
@@ -5554,12 +5548,6 @@
 
             // ✅ CLOUD PUSH: used after intentional edits (Save/Sync)
             const pushToCloud = async () => {
-                // Skip push if we're currently syncing FROM cloud (prevents overwrite loop)
-                if (_syncingFromCloud) {
-                    console.log('🔵 ZEKRA: Cloud push skipped — syncing from cloud.');
-                    return;
-                }
-                
                 const vaultId = SanctuaryEngine.getActiveUID();
                 if (!vaultId || vaultId === 'undefined' || vaultId === 'null') {
                     console.warn('ZEKRA: Cloud push skipped — no valid UID.');
@@ -5613,9 +5601,6 @@
                     SanctuaryEngine.listenToVault(vaultId, vaultData => {
                         const data = vaultData.data;
                         if (data) {
-                            // 🔐 MASTER OVERWRITE FIX: Set flag to prevent pushToCloud loop
-                            _syncingFromCloud = true;
-                            
                             // Source of Truth: Merge Cloud data into Local State
                             vaultState = Object.assign({}, DEF, data);
                             localStorage.setItem(DB_ID, JSON.stringify(vaultState));
@@ -5627,13 +5612,9 @@
                                 }
                                 buildUI();
                                 if (vaultState.c) updateGlobalBranding(vaultState.c);
-                                
-                                // Release cloud sync lock after UI is built
-                                setTimeout(() => { _syncingFromCloud = false; }, 100);
                             }).catch(() => {
                                 buildUI();
                                 if (vaultState.c) updateGlobalBranding(vaultState.c);
-                                setTimeout(() => { _syncingFromCloud = false; }, 100);
                             });
                         } else {
                             // HEALING LOGIC: If cloud is empty but local has data, auto-sync to Cloud
@@ -8510,7 +8491,7 @@
             window.addEventListener('pointercancel', () => clearTimeout(holdTimer));
             window.addEventListener('scroll', () => clearTimeout(holdTimer), { passive: true });
 
-            btnMsgSet = document.getElementById('btn-msg-set');
+            const btnMsgSet = document.getElementById('btn-msg-set');
             if (btnMsgSet) {
                 btnMsgSet.onclick = () => {
                     if (sPane) sPane.classList.toggle('open');
@@ -9950,7 +9931,7 @@
             }
 
             // SUPER ADMIN CONTROL MODE 👑
-            superAdminTarget = null;
+            let superAdminTarget = null;
             let superAdminOriginalData = {};
 
 

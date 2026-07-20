@@ -1,3 +1,0 @@
-8513:            btnMsgSet = document.getElementById('btn-msg-set');
-8514:            if (btnMsgSet) {
-8515:                btnMsgSet.onclick = () => {

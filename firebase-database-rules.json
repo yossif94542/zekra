@@ -42,14 +42,6 @@
           ".write": "auth != null"
         },
         
-
-        "locations": {
-          ".read": "auth != null",
-          ".write": "auth != null"
-        },
-        
-
-
         "cards": {
           ".read": "auth != null",
           ".write": "auth != null"
