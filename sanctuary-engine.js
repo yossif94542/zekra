@@ -256,9 +256,8 @@
                 }
             } catch (e) { /* non-critical */ }
 
-            // ★ FOLDER LOOKUP: Find the folder name for this user BEFORE any session is stored
-            // This ensures data isolation — each couple's data lives in their own folder
-            // ★ FIX: Allow login by Global UID (folder name), Parent A Username, OR Parent B Username
+            // ★ FOLDER LOOKUP: Find user by Global UID, Parent A, OR Parent B username
+            // Then validate the password against the stored credentials
             let targetFolder = null;
             let side = null;
             let matchedPassword = null;
@@ -267,34 +266,37 @@
                 const allUsers = userSnap.val() || {};
                 for (const [folderName, data] of Object.entries(allUsers)) {
                     const auth = data?.settings?.dualAuth || {};
-                    // Check if folder name itself matches (Global UID login)
+                    const identity = data?.identity || {};
+                    // Check Parent A username (from identity or dualAuth)
+                    const parentA = identity.parentA || auth.a_u || '';
+                    const parentB = identity.parentB || auth.b_u || '';
+                    const passA = auth.a_p || '';
+                    const passB = auth.b_p || passA;
+                    
                     if (folderName.toLowerCase() === lowerUser) {
+                        // Global UID login - accept either password
                         targetFolder = folderName;
-                        side = null; // Not a specific side - load whole vault
-                        matchedPassword = auth.a_p || data.p || null;
+                        side = null;
+                        matchedPassword = passA || passB;
                         break;
-                    }
-                    // Check Parent A username
-                    if (auth.a_u && auth.a_u.toLowerCase() === lowerUser) { 
-                        side = 'A'; 
+                    } else if (parentA.toLowerCase() === lowerUser) {
+                        // Parent A login - use Parent A's password
                         targetFolder = folderName;
-                        matchedPassword = auth.a_p || null;
-                        break; 
-                    }
-                    // Check Parent B username
-                    if (auth.b_u && auth.b_u.toLowerCase() === lowerUser) { 
-                        side = 'B'; 
+                        side = 'A';
+                        matchedPassword = passA;
+                        break;
+                    } else if (parentB.toLowerCase() === lowerUser) {
+                        // Parent B login - use Parent B's password
                         targetFolder = folderName;
-                        matchedPassword = auth.b_p || auth.a_p || null;
-                        break; 
+                        side = 'B';
+                        matchedPassword = passB || passA;
+                        break;
                     }
                 }
             } catch (e) { /* folder lookup failed — non-critical */ }
 
-            // 2. Check if we found a matching user via folder/parent lookup
+            // 2. Identity-based authentication using matched folder credentials
             if (targetFolder && matchedPassword) {
-                // User was found via identity lookup - use the matched password for auth
-                // The folder name becomes the Firebase auth email
                 const folderEmail = targetFolder.toLowerCase() + '@zekra.app';
                 try {
                     const cred = await firebase.auth().signInWithEmailAndPassword(folderEmail, matchedPassword);
@@ -308,7 +310,6 @@
                     localStorage.setItem('userRole', 'user');
                     return { success: true, user: targetFolder, role: role, side: side };
                 } catch (authError) {
-                    // If auth with folder email fails, fall through to standard flow
                     console.warn('Folder auth failed, trying standard flow:', authError.message);
                 }
             }
