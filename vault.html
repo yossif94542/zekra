@@ -3235,7 +3235,7 @@
                             </div>
                             <div class="m-inp-grp">
                                 <span class="m-inp-label">Partner B Name</span>
-                                <input type="text" id="prov-pb" placeholder="Marium" class="m-inp !bg-black/40">
+                                <input type="text" id="prov-pb" placeholder="Partner B" class="m-inp !bg-black/40">
                             </div>
                         </div>
                         <button onclick="execAdminProvision()" id="btn-provision-user"
@@ -3528,7 +3528,7 @@
                     <div class="m-inp-grp">
                         <span class="m-inp-label">Floating Buddy Image URL</span>
                         <input type="text" id="m-buddy-url" class="m-inp"
-                            placeholder="https://i.postimg.cc/hvTfzVm3/IMG-7896.jpg">
+                            placeholder="https://via.placeholder.com/150">
                     </div>
                     <div class="m-inp-grp">
                         <span class="m-inp-label">Spotify / Music URL</span>
@@ -3546,7 +3546,7 @@
                         </div>
                     </div>
                     <div class="flex justify-center my-6">
-                        <img src="https://i.postimg.cc/hvTfzVm3/IMG-7896.jpg" loading="lazy"
+                        <img src="https://via.placeholder.com/150" loading="lazy"
                             class="w-16 h-16 rounded-full border-2 border-[#FF7096] p-1 shadow-lg">
                     </div>
                     <button onclick="saveAssets()" class="m-btn-lg">Save & Apply All Assets 🖼️</button>
@@ -5436,15 +5436,15 @@
                 n: "Soulmates", w: "Our Story", m: "Welcome to our sanctuary...",
                 s: "Lovesong", a: "https://open.spotify.com/track/7s25THrKz86PI223H",
                 c: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/94/d2/ba/94d2bacf-07d7-df79-24a3-7fbf5207c848/081227981303.jpg/100x100bb.jpg",
-                ig: "#", tk: "#", sp: "#", color: "#FF7096", float: "https://placehold.co/400x400/FF7096/white?text=Logo", bg: "#FCE4EC", dim: false, pixel: true,
+                ig: "#", tk: "#", sp: "#", color: "#FF7096", float: "https://via.placeholder.com/100x100/FF7096/FFFFFF?text=Logo", bg: "#FCE4EC", dim: false, pixel: true,
                 c1t: "Our First Date", c1s: "October 10, 2024 ♡", c1b: "", c1f: "'Montserrat'",
                 c2t: "Admin Card 2", c2s: "Coming soon... 🌸", c2b: "",
                 userNameFont: "'Nunito'", longMessage: "", bigFont: "'Nunito'",
-                moodImg: "https://placehold.co/600x400/FF7096/white?text=Mood", moodReasons: "De7ketek | Lama bet5a_fy 3alya", moodFont: "'Indie Flower'",
-                lyrics: "I love you forever...", title: "Memory Song", artist: "Artist", art: "https://placehold.co/400x400/FF7096/white?text=Song+Art",
+                moodImg: "https://via.placeholder.com/150x100/FF7096/FFFFFF?text=Mood", moodReasons: "De7ketek | Lama bet5a_fy 3alya", moodFont: "'Indie Flower'",
+                lyrics: "I love you forever...", title: "Memory Song", artist: "Artist", art: "https://via.placeholder.com/100x100/FF7096/FFFFFF?text=Art",
                 spotifyStyle: "spot-style-1",
                 d: "2026-10-10T00:00", dm: "You make my heart smile perfectly ❤️", sd: "2024-10-10",
-                g: [{ url: "https://placehold.co/600x400/FF7096/white?text=Memory+1", cap: "Best day ever💕" }, { url: "https://placehold.co/600x400/FF7096/white?text=Memory+2", cap: "Memories..." }, { url: "https://placehold.co/600x400/FF7096/white?text=Memory+3", cap: "Infinity ♾️" }],
+                g: [{ url: "https://via.placeholder.com/150x100/FF7096/FFFFFF?text=Memory+1", cap: "Best day ever💕" }, { url: "https://via.placeholder.com/150x100/FF7096/FFFFFF?text=Memory+2", cap: "Memories..." }, { url: "https://via.placeholder.com/150x100/FF7096/FFFFFF?text=Memory+3", cap: "Infinity ♾️" }],
                 o: { "msc": 1, "gal": 2, "stt": 3, "qts": 4, "map": 5, "emg": 6, "wal": 7 },
                 y_nick: "Little Prince",
                 m_n: "Soulmate",
@@ -8879,7 +8879,7 @@
                 alert("Divine Bounty Granted! +1000🪙 for Marium. 💎");
             };
             window.divineResetLimits = () => {
-                if (!confirm("Reset Marium's world to base limits?")) return;
+                if (!confirm("Reset Partner's world to base limits?")) return;
                 vaultState.galleryLimit = 5;
                 vaultState.storyUnlocked = false;
                 vaultState.musicSwitches = 0;
@@ -8951,7 +8951,7 @@
                 // Message Editor
                 // Message Editor
                 if (id === 'msg_editor') {
-                    const newMsg = prompt("Enter the new Main Message (Top of Site):", vaultState.dm_large || "Mariumm a8la ma lya...");
+                    const newMsg = prompt("Enter the new Main Message (Top of Site):", vaultState.dm_large || "My love...");
                     if (newMsg) {
                         vaultState.dm_large = newMsg;
                         if (window.firebaseData) {
@@ -8990,7 +8990,7 @@
                 svDB();
                 renderShopProducts();
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-                alert(isGift ? `Gift sent to Marium! 🎁` : `Purchase success! ${p.icon}`);
+                alert(isGift ? `Gift sent! 🎁` : `Purchase success! ${p.icon}`);
             };
 
             window.toggleItem = function (id) {
@@ -9287,7 +9287,7 @@
                 }
                 svDB();
                 renderProductEditor();
-                renderMyItems(); // instantly updates Marium's perspective if open
+                renderMyItems(); // instantly updates partner's perspective if open
             };
 
             function logOrder(user, action) {
@@ -9415,7 +9415,7 @@
                             const user = users[username];
                             const auth = user.settings?.dualAuth || {};
                             const nameA = auth.a_u || "Yossif";
-                            const nameB = auth.b_u || "Marium";
+                            const nameB = auth.b_u || "Partner B";
                             
                             const baseURL = window.location.origin + window.location.pathname;
                             const nfcA = `${baseURL}?v=${username}&side=A&n=${encodeURIComponent(nameA)}`;
@@ -9822,16 +9822,7 @@
                 }
             };
 
-            window.updateAdminCreds = function (target) {
-                const u = document.getElementById(`admin-${target}-user`).value.trim();
-                const p = document.getElementById(`admin-${target}-pass`).value.trim();
-                if (!u || !p) return alert("Please fill in both fields.");
-                if (confirm(`Overwrite ${target} credentials globally?`)) {
-                    window.firebaseData.ref(`users/master/meta/credentials/${target}`).set({ u: u, p: p }).then(() => {
-                        alert(`${target.toUpperCase()} credentials securely updated.`);
-                    }).catch(e => alert("Update failed. Check connection."));
-                }
-            };
+            
 
             // Final Deployment Security Embed
             document.addEventListener('contextmenu', e => e.preventDefault());
@@ -9984,10 +9975,19 @@
 
                 try {
                     if (userKey === 'master') {
-                        // SECURE MASTER OVERRIDE: Stored in private admin_config node
-                        if (!confirm("CRITICAL: You are about to change the Master Dashboard credentials. Proceed?")) return;
-                        await SanctuaryEngine.updateMasterConfig(username, password);
-                        alert("MASTER SECURE KEY UPDATED.");
+                        // FIX: Use Firebase Auth updatePassword for the admin user
+                        if (!confirm("CRITICAL: You are about to change the Master Dashboard password. Proceed?")) return;
+                        const currentUser = firebase.auth().currentUser;
+                        if (currentUser) {
+                            await currentUser.updatePassword(password);
+                            // Also update stored config for session continuity
+                            await window.firebaseData.ref('admin_config/master').update({ u: username, p: password });
+                            alert("Master password updated successfully via Firebase Auth!");
+                        } else {
+                            // Fallback: update database config only
+                            await window.firebaseData.ref('admin_config/master').update({ u: username, p: password });
+                            alert("Master config updated in database (Firebase Auth user not signed in).");
+                        }
                     } else if (userKey === 'parenta') {
                         if (!superAdminTarget) return alert("Error: No remote user selected.");
                         await window.firebaseData.ref(`users/${superAdminTarget}/settings/dualAuth`).update({
@@ -10420,7 +10420,7 @@
                 const u1 = document.getElementById('prov-u1').value.trim();
                 const p1 = document.getElementById('prov-p1').value.trim();
                 const pa = document.getElementById('prov-pa').value.trim() || "Yossif";
-                const pb = document.getElementById('prov-pb').value.trim() || "Marium";
+                const pb = document.getElementById('prov-pb').value.trim() || 'Partner B';
 
                 if (!u1 || !p1) return alert("❌ Username and Key are required.");
 
