@@ -258,27 +258,62 @@
 
             // ★ FOLDER LOOKUP: Find the folder name for this user BEFORE any session is stored
             // This ensures data isolation — each couple's data lives in their own folder
+            // ★ FIX: Allow login by Global UID (folder name), Parent A Username, OR Parent B Username
             let targetFolder = null;
             let side = null;
+            let matchedPassword = null;
             try {
                 const userSnap = await firebase.database().ref('users').once('value');
                 const allUsers = userSnap.val() || {};
                 for (const [folderName, data] of Object.entries(allUsers)) {
                     const auth = data?.settings?.dualAuth || {};
+                    // Check if folder name itself matches (Global UID login)
+                    if (folderName.toLowerCase() === lowerUser) {
+                        targetFolder = folderName;
+                        side = null; // Not a specific side - load whole vault
+                        matchedPassword = auth.a_p || data.p || null;
+                        break;
+                    }
+                    // Check Parent A username
                     if (auth.a_u && auth.a_u.toLowerCase() === lowerUser) { 
                         side = 'A'; 
                         targetFolder = folderName;
+                        matchedPassword = auth.a_p || null;
                         break; 
                     }
+                    // Check Parent B username
                     if (auth.b_u && auth.b_u.toLowerCase() === lowerUser) { 
                         side = 'B'; 
                         targetFolder = folderName;
+                        matchedPassword = auth.b_p || auth.a_p || null;
                         break; 
                     }
                 }
             } catch (e) { /* folder lookup failed — non-critical */ }
 
-            // 2. Standard Firebase Auth Flow with Auto-Provision for regular users
+            // 2. Check if we found a matching user via folder/parent lookup
+            if (targetFolder && matchedPassword) {
+                // User was found via identity lookup - use the matched password for auth
+                // The folder name becomes the Firebase auth email
+                const folderEmail = targetFolder.toLowerCase() + '@zekra.app';
+                try {
+                    const cred = await firebase.auth().signInWithEmailAndPassword(folderEmail, matchedPassword);
+                    const user = cred.user;
+                    const role = 'user';
+                    const sessionData = {
+                        id: targetFolder, uid: user.uid, role: role, lastLogin: Date.now()
+                    };
+                    if (side) sessionData.side = side;
+                    localStorage.setItem(Engine.SESSION_KEY, JSON.stringify(sessionData));
+                    localStorage.setItem('userRole', 'user');
+                    return { success: true, user: targetFolder, role: role, side: side };
+                } catch (authError) {
+                    // If auth with folder email fails, fall through to standard flow
+                    console.warn('Folder auth failed, trying standard flow:', authError.message);
+                }
+            }
+
+            // 3. Standard Firebase Auth Flow with Auto-Provision for regular users
             const email = lowerUser.includes('@') ? lowerUser : lowerUser + "@zekra.app";
             
             try {
@@ -591,7 +626,7 @@
                         dualAuth: {
                             a_u: username,
                             a_p: password,
-                            b_u: "Soulmate",
+                            b_u: "Partner",
                             b_p: password
                         }
                     }
