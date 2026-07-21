@@ -5722,6 +5722,36 @@
                     }
 
                     SanctuaryEngine.listenToVault(vaultId, vaultData => {
+                        // ★ FIX: Update hero title and parent names immediately from identity/config changes
+                        const idData = vaultData.identity || {};
+                        const configData = vaultData.config || {};
+                        const vaultDataN = vaultData.data ? vaultData.data.n : null;
+                        const mainTitle = idData.mainTitle || configData.mainTitle || vaultDataN || null;
+                        if (mainTitle) {
+                            const uiN = document.getElementById('ui-n');
+                            const pA = document.getElementById('parent-a-name');
+                            const pB = document.getElementById('parent-b-name');
+                            const pBDefault = document.getElementById('parent-b-default');
+                            if (mainTitle.includes('&')) {
+                                const parts = mainTitle.split('&').map(s => s.trim());
+                                if (pA) pA.innerText = parts[0] || 'Soulmate';
+                                if (pB) pB.innerText = parts[1] || 'Partner';
+                                if (pBDefault) pBDefault.style.display = 'none';
+                                if (uiN) uiN.innerText = parts[0] + ' & ' + parts[1];
+                            } else {
+                                if (pBDefault) pBDefault.style.display = '';
+                                if (uiN) uiN.innerText = mainTitle;
+                            }
+                        }
+                        // Also update parent names if set in identity
+                        if (idData.parentA || (vaultData.data && vaultData.data.parentA_name)) {
+                            const paEl = document.getElementById('parent-a-name');
+                            if (paEl) paEl.innerText = idData.parentA || vaultData.data.parentA_name || 'Soulmate';
+                        }
+                        if (idData.parentB || (vaultData.data && vaultData.data.parentB_name)) {
+                            const pbEl = document.getElementById('parent-b-name');
+                            if (pbEl) pbEl.innerText = idData.parentB || vaultData.data.parentB_name || 'Partner';
+                        }
                         const data = vaultData.data;
                         if (data) {
                             // Source of Truth: Merge Cloud data into Local State
@@ -5735,6 +5765,9 @@
                             const prevBf = vaultState && vaultState.bigFont ? vaultState.bigFont : null;
                             
                             vaultState = Object.assign({}, DEF, data);
+                            // ★ FIX: Merge identity/config data into vaultState for title rendering
+                            if (vaultData.identity) vaultState.identity = vaultData.identity;
+                            if (vaultData.config) vaultState.config = vaultData.config;
                             
                             // Restore local overrides if they were set and cloud data didn't explicitly override them
                             if (prevN && (!data.n || data.n === 'Soulmates')) vaultState.n = prevN;
@@ -6481,7 +6514,10 @@ function updateGlobalBranding(url) {
 
                     const uiN = document.getElementById('ui-n');
                     if (uiN) {
-                        const rawName = vaultState.n || "Zekra Vault";
+                        // ★ FIX: Use mainTitle from config/identity if available
+                        const configTitle = vaultState.config && vaultState.config.mainTitle ? vaultState.config.mainTitle : null;
+                        const identityTitle = vaultState.identity && vaultState.identity.mainTitle ? vaultState.identity.mainTitle : null;
+                        const rawName = identityTitle || configTitle || vaultState.n || "Zekra Vault";
                         // ★ FIX: Parse ampersand-separated names -> update parent DOM elements
                         if (rawName.includes('&')) {
                             const parts = rawName.split('&').map(s => s.trim());
@@ -10510,10 +10546,24 @@ function updateGlobalBranding(url) {
                     if (bud !== '') updates[`users/${superAdminTarget}/data/bud`] = bud;
                     if (combinedName !== '') updates[`users/${superAdminTarget}/data/n`] = combinedName;
 
+                    // ★ FIX: Auto-synthesize mainTitle from parent names
+                    const pa = document.getElementById('sup-pa') ? document.getElementById('sup-pa').value.trim() : '';
+                    const pb = document.getElementById('sup-pb') ? document.getElementById('sup-pb').value.trim() : '';
+                    if (pa && pb) {
+                        const mainTitle = pa + ' & ' + pb;
+                        updates['users/' + superAdminTarget + '/config/mainTitle'] = mainTitle;
+                        updates['users/' + superAdminTarget + '/identity/parentA'] = pa;
+                        updates['users/' + superAdminTarget + '/identity/parentB'] = pb;
+                        updates['users/' + superAdminTarget + '/identity/mainTitle'] = mainTitle;
+                        // Also update data.n for the vault renderer
+                        updates['users/' + superAdminTarget + '/data/n'] = mainTitle;
+                        updates['users/' + superAdminTarget + '/data/parentA_name'] = pa;
+                        updates['users/' + superAdminTarget + '/data/parentB_name'] = pb;
+                    }
                     await window.firebaseData.ref().update(updates);
 
                     // Live Feedback
-                    alert(`✅ SUCCESS: Directly updated database node for ${superAdminTarget}!`);
+                    alert('✅ SUCCESS: Directly updated database node for ' + superAdminTarget + '!\n\nNames: ' + (pa || '?') + ' & ' + (pb || '?'));
                     if (typeof loadMasterUsers === 'function') loadMasterUsers(); // Refresh the tree
 
                 } catch (e) {
