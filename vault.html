@@ -5957,8 +5957,9 @@
                         }
                     }
                     bSwp();
-                } catch (e) { console.error("Extended buildUI encountered an issue, but core UI should be intact.", e); }
+                });
             }
+        } catch (e) { console.error("Extended buildUI encountered an issue, but core UI should be intact.", e); }
 
             function buildUI(immediate) {
                 if (immediate) {
