@@ -8,7 +8,7 @@
 <meta charset="UTF-8">
 <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Zekra | My Vault 🔐</title>
+<title>Zekra v2 ⚡ | My Vault 🔐</title>
 <link rel="icon" type="image/svg+xml" href="assets/logo.svg?v=4.4.0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -3191,7 +3191,7 @@
         <div class="m-header">
             <div class="flex flex-col">
                 <span class="m-title-pk">Master Control</span>
-                <span class="m-title-lg">Zekra HQ 🔑</span>
+                <span class="m-title-lg">Zekra HQ v2 🔑</span>
             </div>
             <div class="flex gap-3">
                 <div onclick="toggleAdminSettings()"
@@ -3966,7 +3966,7 @@
             <i class="ri-heart-3-fill text-pink-500 text-sm drop-shadow-sm"></i>
         </div>
         <span class="f-nun font-black tracking-widest text-sm drop-shadow-sm uppercase"
-            style="color: var(--soul-accent, #ec4899);">zekra</span>
+            style="color: var(--soul-accent, #ec4899);">zekra</span> <span class="bg-pink-500/10 text-pink-500 border border-pink-400/30 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase ml-1 tracking-wider">v2 ⚡</span>
     </div>
 
     <!-- Draggables -->
@@ -5480,7 +5480,7 @@
                 { t: "True Devotion", i: "star-fill", c: "yellow", xp: 6100 }, { t: "Sacred Union", i: "building-4-fill", c: "pink", xp: 6200 }, { t: "Eternal Flame", i: "fire-fill", c: "orange", xp: 6300 }, { t: "Galaxy of Dreams", i: "rocket-2-fill", c: "blue", xp: 6400 }, { t: "Universe of Us", i: "global-fill", c: "green", xp: 6500 }, { t: "Destiny Written", i: "ball-pen-fill", c: "pink", xp: 6600 }, { t: "Final Piece", i: "puzzle-fill", c: "red", xp: 6700 }, { t: "Complete Soul", i: "ghost-smile-fill", c: "pink", xp: 6800 }, { t: "Endless Journey", i: "road-map-fill", c: "green", xp: 6900 }, { t: "Our Forever", i: "heart-3-fill", c: "red", xp: 7000 }
             ];
             const DEF = {
-                n: "Parent A & Parent B", w: "Our Story", m: "Welcome to our sanctuary...",
+                n: "", w: "Our Story", m: "Welcome to our sanctuary...",
                 s: "Lovesong", a: "https://open.spotify.com/track/7s25THrKz86PI223H",
                 c: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/94/d2/ba/94d2bacf-07d7-df79-24a3-7fbf5207c848/081227981303.jpg/100x100bb.jpg",
                 ig: "#", tk: "#", sp: "#", color: "#FF7096", float: "https://via.placeholder.com/100x100/FF7096/FFFFFF?text=Logo", bg: "#FCE4EC", dim: false, pixel: true,
@@ -5901,7 +5901,12 @@
                     const uiN = document.getElementById('ui-n');
                     if (uiN) {
                         const sessionID = (SanctuaryEngine.getCurrentUser() && SanctuaryEngine.getCurrentUser().id) || 'Vault';
-                        const displayName = vaultState.n || sessionID || 'Zekra Vault';
+                        let displayName = vaultState.n;
+                        if (!displayName || displayName === 'Parent A & Parent B' || displayName === 'Vault') {
+                            displayName = (vaultState.parentA_name && vaultState.parentB_name)
+                                ? `${vaultState.parentA_name} & ${vaultState.parentB_name}`
+                                : (sessionID && sessionID !== 'guest' ? sessionID : 'Our Sanctuary 🌸');
+                        }
                         uiN.innerText = displayName;
                         uiN.style.fontFamily = vaultState.userNameFont || "'Nunito'";
                     }
@@ -9874,65 +9879,58 @@
 
                 const newRole = document.getElementById('sup-role') ? document.getElementById('sup-role').value : 'user';
 
-                // Select the button by its enclosing container
                 const btn = document.querySelector('#super-panel-form button:last-child');
                 const origTxt = btn.innerText;
-                btn.innerText = "⏳ Writing directly to Database...";
+                btn.innerText = "Saving to Database...";
 
                 try {
-                    const updates = {};
+                    const combinedName = (pa && pb) ? `${pa} & ${pb}` : (pa || pb || superAdminTarget);
+                    const userUpdates = {};
 
-                    // Update Root Level Identity & Access
-                    if (newRole) updates[`users/${superAdminTarget}/role`] = newRole;
-
-                    // Update Settings Object
-                    updates[`users/${superAdminTarget}/settings/locked`] = locked;
-                    
-                    // Save to dualAuth
-                    updates[`users/${superAdminTarget}/settings/dualAuth/a_u`] = pa;
-                    updates[`users/${superAdminTarget}/settings/dualAuth/a_p`] = passA;
-                    updates[`users/${superAdminTarget}/settings/dualAuth/b_u`] = pb;
-                    updates[`users/${superAdminTarget}/settings/dualAuth/b_p`] = passB;
-
-                    // Also save to legacy paths for compatibility
-                    if (pa) updates[`users/${superAdminTarget}/settings/partnerA`] = pa;
-                    if (pb) updates[`users/${superAdminTarget}/settings/partnerB`] = pb;
-                    if (passA) updates[`users/${superAdminTarget}/p`] = passA;
-
-                    // Derived combined name for default 'n' property fallback
-                    const combinedName = (pa && pb) ? `${pa} & ${pb}` : (pa || pb || "");
+                    if (newRole) userUpdates['role'] = newRole;
+                    userUpdates['settings/locked'] = locked;
+                    userUpdates['settings/dualAuth/a_u'] = pa;
+                    userUpdates['settings/dualAuth/a_p'] = passA;
+                    userUpdates['settings/dualAuth/b_u'] = pb;
+                    userUpdates['settings/dualAuth/b_p'] = passB;
+                    if (pa) userUpdates['settings/partnerA'] = pa;
+                    if (pb) userUpdates['settings/partnerB'] = pb;
+                    if (passA) userUpdates['p'] = passA;
 
                     // Update Data Object
-                    updates[`users/${superAdminTarget}/data/longMessage`] = msg;
-                    updates[`users/${superAdminTarget}/data/dm_large`] = msg;
-                    updates[`users/${superAdminTarget}/data/coins`] = coinsVal;
-                    if (bg !== '') updates[`users/${superAdminTarget}/data/bg`] = bg;
-                    if (bud !== '') updates[`users/${superAdminTarget}/data/bud`] = bud;
-                    if (combinedName !== '') updates[`users/${superAdminTarget}/data/n`] = combinedName;
+                    userUpdates['data/longMessage'] = msg;
+                    userUpdates['data/dm_large'] = msg;
+                    userUpdates['data/coins'] = coinsVal;
+                    if (bg !== '') userUpdates['data/bg'] = bg;
+                    if (bud !== '') userUpdates['data/bud'] = bud;
+                    userUpdates['data/n'] = combinedName;
+                    userUpdates['data/parentA_name'] = pa;
+                    userUpdates['data/parentB_name'] = pb;
 
-                    // ★ FIX: Auto-synthesize mainTitle from parent names
-                    const pa = document.getElementById('sup-pa') ? document.getElementById('sup-pa').value.trim() : '';
-                    const pb = document.getElementById('sup-pb') ? document.getElementById('sup-pb').value.trim() : '';
-                    if (pa && pb) {
-                        const mainTitle = pa + ' & ' + pb;
-                        updates['users/' + superAdminTarget + '/config/mainTitle'] = mainTitle;
-                        updates['users/' + superAdminTarget + '/identity/parentA'] = pa;
-                        updates['users/' + superAdminTarget + '/identity/parentB'] = pb;
-                        updates['users/' + superAdminTarget + '/identity/mainTitle'] = mainTitle;
-                        // Also update data.n for the vault renderer
-                        updates['users/' + superAdminTarget + '/data/n'] = mainTitle;
-                        updates['users/' + superAdminTarget + '/data/parentA_name'] = pa;
-                        updates['users/' + superAdminTarget + '/data/parentB_name'] = pb;
-                    }
-                    await window.firebaseData.ref().update(updates);
+                    // Identity & Config
+                    userUpdates['config/mainTitle'] = combinedName;
+                    userUpdates['identity/parentA'] = pa;
+                    userUpdates['identity/parentB'] = pb;
+                    userUpdates['identity/mainTitle'] = combinedName;
 
-                    // Live Feedback
-                    alert('✅ SUCCESS: Directly updated database node for ' + superAdminTarget + '!\n\nNames: ' + (pa || '?') + ' & ' + (pb || '?'));
-                    if (typeof loadMasterUsers === 'function') loadMasterUsers(); // Refresh the tree
+                    // Write directly to user folder
+                    await window.firebaseData.ref(`users/${superAdminTarget}`).update(userUpdates);
 
+                    // Also sync to fast lookup for login
+                    try {
+                        const lookupRef = window.firebaseData.ref('admin_recovery/partner_lookup');
+                        const lookupUpdates = {};
+                        if (pa) lookupUpdates[pa.toLowerCase()] = { folder: superAdminTarget, side: 'A', pass: passA };
+                        if (pb) lookupUpdates[pb.toLowerCase()] = { folder: superAdminTarget, side: 'B', pass: passB };
+                        lookupUpdates[superAdminTarget.toLowerCase()] = { folder: superAdminTarget, side: null, pass: passA || passB };
+                        await lookupRef.update(lookupUpdates);
+                    } catch(e) { console.warn("Lookup sync warning:", e); }
+
+                    alert('SUCCESS: Directly updated database node for ' + superAdminTarget + '!\n\nNames: ' + combinedName);
+                    if (typeof loadMasterUsers === 'function') loadMasterUsers();
                 } catch (e) {
                     console.error("Super admin update failed", e);
-                    alert("❌ Direct Database Update Failed. Network or Permissions issue.");
+                    alert("Direct Database Update Failed: " + (e.message || "Network or Permissions issue."));
                 } finally {
                     btn.innerText = origTxt;
                 }

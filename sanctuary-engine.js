@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ZEKRA SANCTUARY ENGINE v4.4.0 (MASTER BYPASS + AUTO-PROVISION) 🛡️
  */
 
@@ -33,7 +33,7 @@
         }
         static EMERGENCY_RESET = false;
         static SESSION_KEY = "zekra_session_id";
-        static version = "4.4.0";
+        static version = "4.5.0-v2";
 
         static isMaster() {
             if (Engine.EMERGENCY_RESET) return true;
