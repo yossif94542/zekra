@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <!-- Content Security Policy: Resolve CSP/CORB & eval blocks -->
@@ -4599,7 +4599,7 @@
                     Trigger Image</label>
                 <div
                     class="w-full bg-gray-50 rounded-[20px] p-4 text-center border-2 border-dashed border-gray-200 mb-6 hover:border-pink-300 transition-colors cursor-pointer relative">
-                    <input type="file" id="float-file" accept="image/*"
+                    <input type="file" id="float-file" accept="image/*,video/*"
                         class="absolute inset-0 opacity-0 cursor-pointer">
                     <span id="float-file-name"
                         class="text-[11px] font-bold text-gray-400 uppercase truncate px-2 block">Choose Trigger
@@ -4830,7 +4830,7 @@
                         <label class="text-[9px] font-black text-gray-400 uppercase mb-2 block">Card Background</label>
                         <div
                             class="w-full bg-white rounded-[15px] p-3 text-center border border-gray-100 mb-3 cursor-pointer relative">
-                            <input type="file" id="c1-file" accept="image/*"
+                            <input type="file" id="c1-file" accept="image/*,video/*"
                                 class="absolute inset-0 opacity-0 cursor-pointer">
                             <span id="c1-file-name" class="text-[10px] font-bold text-gray-400 uppercase">Upload Card 1
                                 Bg</span>
@@ -4848,7 +4848,7 @@
                         <label class="text-[9px] font-black text-gray-400 uppercase mb-2 block">Card Background</label>
                         <div
                             class="w-full bg-white rounded-[15px] p-3 text-center border border-gray-100 mb-3 cursor-pointer relative">
-                            <input type="file" id="c2-file" accept="image/*"
+                            <input type="file" id="c2-file" accept="image/*,video/*"
                                 class="absolute inset-0 opacity-0 cursor-pointer">
                             <span id="c2-file-name" class="text-[10px] font-bold text-gray-400 uppercase">Upload Card 2
                                 Bg</span>
@@ -4878,7 +4878,7 @@
                     Wallpaper</label>
                 <div
                     class="w-full bg-gray-50 rounded-[20px] p-4 text-center border-2 border-dashed border-gray-200 mb-6 hover:border-purple-300 transition-colors cursor-pointer relative">
-                    <input type="file" id="bg-file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                    <input type="file" id="bg-file" accept="image/*,video/*" class="absolute inset-0 opacity-0 cursor-pointer">
                     <span id="bg-file-name"
                         class="text-[11px] font-bold text-gray-400 uppercase truncate px-2 block">Upload New
                         Background</span>
@@ -4916,7 +4916,7 @@
                     Mad" Image</label>
                 <div
                     class="w-full bg-gray-50 rounded-[20px] p-4 text-center border-2 border-dashed border-gray-200 mb-6 hover:border-blue-300 transition-colors cursor-pointer relative">
-                    <input type="file" id="mood-file" accept="image/*"
+                    <input type="file" id="mood-file" accept="image/*,video/*"
                         class="absolute inset-0 opacity-0 cursor-pointer">
                     <span id="mood-file-name"
                         class="text-[11px] font-bold text-gray-400 uppercase truncate px-2 block">Choose Mood
@@ -5620,7 +5620,8 @@
 
 
             // ✅ CACHE ONLY: localStorage is a fallback cache, NOT the source of truth
-            const svDB = () => {
+                        let _svDbCloudTimer = null;
+            const svDB = (skipCloud = false) => {
                 try {
                     localStorage.setItem(DB_ID, JSON.stringify(vaultState));
                 } catch (e) { /* ignore storage errors */ }
@@ -5631,10 +5632,20 @@
                     setTimeout(() => { if (syncEl) syncEl.style.opacity = '0'; }, 1500);
                 }
                 buildUI();
+
+                if (!skipCloud && !window._syncingFromCloud) {
+                    if (_svDbCloudTimer) clearTimeout(_svDbCloudTimer);
+                    _svDbCloudTimer = setTimeout(() => {
+                        if (typeof pushToCloud === 'function') pushToCloud();
+                    }, 400);
+                }
             };
+            window.svDB = svDB;
 
             // ✅ CLOUD PUSH: used after intentional edits (Save/Sync)
-            const pushToCloud = async () => {
+                        const pushToCloud = async () => {
+                if (window._syncingFromCloud) return;
+                
                 const vaultId = SanctuaryEngine.getActiveUID();
                 if (!vaultId || vaultId === 'undefined' || vaultId === 'null') {
                     console.warn('ZEKRA: Cloud push skipped — no valid UID.');
@@ -5717,20 +5728,182 @@
                     }
 
                     SanctuaryEngine.listenToVault(vaultId, vaultData => {
-                        // ★ FIX: Update hero title and parent names immediately from identity/config changes
-                        const idData = vaultData.identity || {};
-                        const configData = vaultData.config || {};
-                        const vaultDataN = vaultData.data ? vaultData.data.n : null;
-                        const mainTitle = idData.mainTitle || configData.mainTitle || vaultDataN || null;
-                        if (mainTitle) {
-                                                const uiN = document.getElementById('ui-n');
+                        if (!vaultData) return;
+                        const data = vaultData.data;
+                        if (data) {
+                            window._syncingFromCloud = true;
+                            // Source of Truth: Merge Cloud data into Local State
+                            vaultState = Object.assign({}, DEF, data);
+                            localStorage.setItem(DB_ID, JSON.stringify(vaultState));
+
+                            // Sync identity / mainTitle if present
+                            const idData = vaultData.identity || {};
+                            const configData = vaultData.config || {};
+                            const newTitle = idData.mainTitle || configData.mainTitle || data.n;
+                            if (newTitle) {
+                                vaultState.n = newTitle;
+                            }
+
+                            buildUI(true);
+                            if (vaultState.c && typeof updateGlobalBranding === 'function') {
+                                updateGlobalBranding(vaultState.c);
+                            }
+                            setTimeout(() => { 
+                                window._syncingFromCloud = false; 
+                            }, 200);
+                        } else {
+                            buildUI(true);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Cloud Sync init issue:", e);
+            }
+
+                        // --- SMART MUSIC & VINYL ENGINE ---
+            let isPlayerPlaying = false;
+            let vAudio = new Audio();
+
+            async function renderSmartPlayer(url, lytics) {
+                const spr = document.getElementById('spotify-container');
+                const vpl = document.getElementById('vinyl-player');
+                const lyBox = document.getElementById('lyrics-display');
+
+                if (!spr || !vpl || !url || url === 'undefined' || url === 'null' || url === '') {
+                    if (spr) spr.classList.add('hidden');
+                    if (vpl) vpl.classList.add('hidden');
+                    return;
+                }
+
+                if (url.includes('spotify.link')) {
+                    spr.classList.remove('hidden'); vpl.classList.add('hidden');
+                    spr.innerHTML = `<div class="bg-black/60 backdrop-blur-sm md:backdrop-blur-md text-white p-6 rounded-2xl text-center text-sm font-medium border border-white/20">
+                        <i class="ri-error-warning-line text-2xl mb-2 block text-pink-400"></i>
+                        Shortened links are not supported.<br>
+                        <span class="text-[10px] opacity-70">Please use 'Share > Copy Song Link' in the Spotify app.</span>
+                    </div>`;
+                    return;
+                }
+
+                const isSpotify = url.includes('spotify.com') && (url.includes('/track/') || url.includes('/playlist/') || url.includes('/album/') || url.includes('/artist/') || url.includes('/embed/'));
+
+                if (isSpotify) {
+                    spr.classList.remove('hidden'); vpl.classList.add('hidden');
+                    let embedUrl = url.split('?')[0];
+                    if (embedUrl.includes('spotify.com') && !embedUrl.includes('/embed/')) {
+                        if (embedUrl.includes('/track/')) embedUrl = embedUrl.replace('/track/', '/embed/track/');
+                        else if (embedUrl.includes('/playlist/')) embedUrl = embedUrl.replace('/playlist/', '/embed/playlist/');
+                        else if (embedUrl.includes('/album/')) embedUrl = embedUrl.replace('/album/', '/embed/album/');
+                        else if (embedUrl.includes('/artist/')) embedUrl = embedUrl.replace('/artist/', '/embed/artist/');
+                    }
+                    spr.innerHTML = `<iframe style="border-radius:12px" src="${embedUrl}?utm_source=generator&theme=0" width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+                    if (lyBox) lyBox.classList.add('hidden');
+                } else {
+                    spr.classList.add('hidden'); vpl.classList.remove('hidden');
+                    const vTitle = document.getElementById('v-title');
+                    const vArtist = document.getElementById('v-artist');
+                    if (vTitle) vTitle.innerText = vaultState.title || "Memory Song";
+                    if (vArtist) vArtist.innerText = vaultState.artist || "Our Track";
+
+                    const vArt = document.getElementById('v-art');
+                    if (vArt) {
+                        const fallbackArt = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=200";
+                        vArt.src = vaultState.art || fallbackArt;
+                        vArt.onerror = () => { vArt.src = fallbackArt; vArt.onerror = null; };
+                    }
+
+                    const isAudioFile = url.match(/\.(mp3|wav|ogg|m4a|aac)$/i) || url.includes('stream') || url.includes('audio');
+                    if (vAudio.src !== url && (isAudioFile || !url.includes('http'))) {
+                        vAudio.pause(); vAudio = new Audio(url);
+                        isPlayerPlaying = false;
+                        updateVinylUI();
+                    }
+
+                    if (lyBox) {
+                        if (lytics && lytics.trim() !== "") {
+                            lyBox.classList.remove('hidden');
+                            const lyP = lyBox.querySelector('p');
+                            if (lyP) lyP.innerText = lytics;
+                        } else { lyBox.classList.add('hidden'); }
+                    }
+                }
+            }
+            window.renderSmartPlayer = renderSmartPlayer;
+
+            function updateVinylUI() {
+                const box = document.getElementById('vinyl-box');
+                const icon = document.getElementById('v-play-icon');
+                if (box && icon) {
+                    if (isPlayerPlaying) {
+                        box.classList.add('spinning');
+                        icon.className = 'ri-pause-fill text-2xl';
+                    } else {
+                        box.classList.remove('spinning');
+                        icon.className = 'ri-play-fill text-2xl';
+                    }
+                }
+            }
+
+            const vPlayBtn = document.getElementById('v-play-btn');
+            if (vPlayBtn) {
+                vPlayBtn.onclick = () => {
+                    if (isPlayerPlaying) {
+                        vAudio.pause();
+                    } else {
+                        const p = vAudio.play();
+                        if (p) p.catch(() => alert("Click again to play!"));
+                    }
+                    isPlayerPlaying = !isPlayerPlaying;
+                    updateVinylUI();
+                };
+            }
+
+            vAudio.onended = () => {
+                isPlayerPlaying = false;
+                updateVinylUI();
+            };
+
+            async function fetchSmartDetails() {
+                const t = document.getElementById('vaultState-at')?.value?.trim() || "";
+                const a = document.getElementById('vaultState-aa')?.value?.trim() || "";
+                if (!t || !a || t === "Memory Song" || a === "Artist") return;
+                try {
+                    const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(a)}/${encodeURIComponent(t)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.lyrics) {
+                            vaultState.lyrics = data.lyrics;
+                            const lyIn = document.getElementById('music-lyrics-input');
+                            if (lyIn) lyIn.value = data.lyrics;
+                        }
+                    }
+                } catch (e) { console.warn("Lyrics fetch service unreachable."); }
+
+                try {
+                    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(a + ' ' + t)}&entity=song&limit=1`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.results && data.results[0] && data.results[0].artworkUrl100) {
+                            vaultState.art = data.results[0].artworkUrl100.replace('100x100', '400x400');
+                        }
+                    }
+                } catch (e) { /* silent */ }
+            }
+            window.fetchSmartDetails = fetchSmartDetails;
+
+            // BUILD RENDERING CORE (Fixed Sync Logic)
+            let _journeyRendered = false;
+            let _buildUITimer = null;
+            const _bgAttach = () => window.ZEKRA_IS_MOBILE ? 'scroll' : 'fixed';
+
+            function _buildUICore() {
+                try {
+                    const uiN = document.getElementById('ui-n');
                     if (uiN) {
-                        // ★ FIX: Simple - show folder name (session id) or mainTitle
                         const sessionID = (SanctuaryEngine.getCurrentUser() && SanctuaryEngine.getCurrentUser().id) || 'Vault';
                         const displayName = vaultState.n || sessionID || 'Zekra Vault';
                         uiN.innerText = displayName;
                         uiN.style.fontFamily = vaultState.userNameFont || "'Nunito'";
-                    }
                     }
 
                     const uiMsg = document.querySelector('header p');
@@ -5957,9 +6130,10 @@
                         }
                     }
                     bSwp();
-                });
+                } catch (e) {
+                    console.error("Extended buildUI encountered an issue, but core UI should be intact.", e);
+                }
             }
-        } catch (e) { console.error("Extended buildUI encountered an issue, but core UI should be intact.", e); }
 
             function buildUI(immediate) {
                 if (immediate) {
