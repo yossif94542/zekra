@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 Nuclear Reset</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:#0A0A0A;color:#fff;font-family:'Segoe UI',sans-serif;min-height:100dvh;display:flex;align-items:center;justify-content:center}
+        .c{max-width:480px;width:100%;padding:30px;text-align:center}
+        h1{font-size:28px;color:#ff4444;margin-bottom:8px}
+        .sub{color:#888;font-size:13px;margin-bottom:25px}
+        .warn{background:#1a0a0a;border:1px solid #ff4444;border-radius:12px;padding:15px;margin-bottom:20px;text-align:left;font-size:12px;color:#aaa;line-height:1.8}
+        .warn strong{color:#ff4444}
+        .btn{width:100%;padding:18px;border-radius:12px;font-size:16px;font-weight:900;border:none;cursor:pointer;margin-bottom:10px;text-transform:uppercase}
+        .btn-red{background:#ff4444;color:#fff}
+        .btn-red:hover{opacity:.9}
+        .btn-red:disabled{opacity:.4}
+        .btn-gold{background:#FFD700;color:#000}
+        .btn-gold:hover{opacity:.9}
+        .log{background:#111;border:1px solid #222;border-radius:10px;padding:12px;margin-top:15px;max-height:300px;overflow-y:auto;text-align:left;font-family:monospace;font-size:11px;line-height:1.7;display:none}
+        .log .ok{color:#4ade80}
+        .log .err{color:#ff4444}
+        .log .inf{color:#60a5fa}
+        .log .warn{color:#facc15}
+        .pbar{width:100%;height:4px;background:#222;border-radius:2px;margin-top:12px;overflow:hidden;display:none}
+        .pbar .fill{height:100%;width:0%;background:linear-gradient(90deg,#ff4444,#FFD700);transition:width .5s}
+    </style>
+</head>
+<body>
+<div class="c">
+    <div style="font-size:48px">🔥</div>
+    <h1>NUCLEAR RESET</h1>
+    <p class="sub">مسح كل البيانات + حساب الماستر — تلقائي بالكامل</p>
+    <div class="warn">
+        <strong>⚠️ هيتشاف كل حاجة:</strong><br>
+        • 22 عقدة من Realtime Database<br>
+        • حساب Firebase Auth (admin_zekra_9454@zekra.com)<br>
+        • localStorage + sessionStorage<br><br>
+        <strong>وشكل الموقع مش هيتغير.</strong>
+    </div>
+    <button class="btn btn-red" id="nukeBtn" onclick="nuke()">☢️ NUKE EVERYTHING</button>
+    <button class="btn btn-gold" id="setupBtn" style="display:none" onclick="goSetup()">➡️ الذهاب إلى إعداد الماستر</button>
+    <div id="status" style="min-height:24px;font-size:13px;font-weight:700;margin-top:10px"></div>
+    <div class="pbar" id="pbar"><div class="fill" id="pfill"></div></div>
+    <div class="log" id="log"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+var DB_URL = "https://zekra-9454-default-rtdb.europe-west1.firebasedatabase.app";
+var API_KEY = "AIzaSyCIFqGpG3OgQPG9xWMqk0fY9pqwaoe7jk8";
+var MASTER_EMAIL = "admin_zekra_9454@zekra.com";
+var MASTER_PASS = "Master2026!";
+
+var config = {
+    apiKey: API_KEY,
+    authDomain: "zekra-9454.firebaseapp.com",
+    databaseURL: DB_URL,
+    projectId: "zekra-9454"
+};
+if (!firebase.apps.length) firebase.initializeApp(config);
+
+var NODES = [
+    "admin_configs", "admin_notifications", "couples",
+    "gifts_marium", "gifts_yossif", "locations",
+    "orders", "orders_database", "paymentRequests",
+    "peaceMode", "peace_response", "peace_treaty_status",
+    "rechargeRequests", "relationships", "sketchbook",
+    "surprise_trigger", "test_connection", "time_capsules",
+    "vaults", "zekra_chat", "zekra_data", "zekra_orders"
+];
+
+var nukeBtn = document.getElementById('nukeBtn');
+var setupBtn = document.getElementById('setupBtn');
+var statusEl = document.getElementById('status');
+var logEl = document.getElementById('log');
+var pbar = document.getElementById('pbar');
+var pfill = document.getElementById('pfill');
+
+function log(msg, type) {
+    logEl.style.display = 'block';
+    var d = document.createElement('div');
+    d.className = 'log-' + (type || 'inf');
+    d.textContent = '> ' + msg;
+    logEl.appendChild(d);
+    logEl.scrollTop = logEl.scrollHeight;
+}
+
+function setStatus(msg, type) {
+    statusEl.textContent = msg;
+    statusEl.style.color = type === 'error' ? '#ff4444' : type === 'success' ? '#4ade80' : type === 'warning' ? '#facc15' : '#60a5fa';
+}
+
+function setProgress(pct) {
+    pbar.style.display = 'block';
+    pfill.style.width = pct + '%';
+}
+
+function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+// ── Delete Firebase Auth account via REST API ──
+async function deleteAuthAccount() {
+    log('🔐 محاولة حذف حساب Firebase Auth...', 'warn');
+    try {
+        // Step 1: Sign in to get idToken
+        var signInUrl = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + API_KEY;
+        var resp = await fetch(signInUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: MASTER_EMAIL, password: MASTER_PASS, returnSecureToken: true})
+        });
+        var data = await resp.json();
+        
+        if (data.error) {
+            log('❌ فشل تسجيل الدخول: ' + (data.error.message || 'unknown'), 'err');
+            log('⚠️ لازم تمسح الحساب يدوي من Firebase Console > Authentication', 'warn');
+            return false;
+        }
+        
+        var idToken = data.idToken;
+        log('✅ تم تسجيل الدخول للحصول على idToken', 'ok');
+        
+        // Step 2: Delete account using idToken
+        var deleteUrl = "https://identitytoolkit.googleapis.com/v1/accounts:delete?key=" + API_KEY;
+        var delResp = await fetch(deleteUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({idToken: idToken})
+        });
+        var delData = await delResp.json();
+        
+        if (delData.error) {
+            log('❌ فشل حذف الحساب: ' + (delData.error.message || 'unknown'), 'err');
+            log('⚠️ لازم تمسح الحساب يدوي من Firebase Console > Authentication', 'warn');
+            return false;
+        }
+        
+        log('✅ تم حذف حساب Firebase Auth بنجاح!', 'ok');
+        return true;
+    } catch (e) {
+        log('❌ خطأ في حذف Auth: ' + e.message, 'err');
+        log('⚠️ لازم تمسح الحساب يدوي من Firebase Console > Authentication', 'warn');
+        return false;
+    }
+}
+
+// ── Main nuke function ──
+async function nuke() {
+    nukeBtn.disabled = true;
+    nukeBtn.textContent = '☢️ جاري المسح...';
+    setStatus('🔥 بدء المسح النووي...', 'warning');
+    log('========================================');
+    log('☢️ بدء تفعيل المسح النووي', 'warn');
+    log('========================================');
+    setProgress(5);
+
+    // Wait for Firebase
+    var att = 0;
+    while (!firebase.apps.length && att < 20) { await sleep(500); att++; }
+    if (!firebase.apps.length) {
+        setStatus('❌ Firebase لم يعمل', 'error');
+        log('Firebase فشل في التحميل', 'err');
+        nukeBtn.disabled = false;
+        nukeBtn.textContent = '☢️ NUKE EVERYTHING';
+        return;
+    }
+    log('✅ Firebase متصل', 'ok');
+    setProgress(10);
+
+    // ── Phase 1: Wipe all database nodes ──
+    for (var i = 0; i < NODES.length; i++) {
+        var node = NODES[i];
+        try {
+            log('🧹 مسح ' + node + '...');
+            await firebase.database().ref(node).set(null);
+            log('✅ تم مسح ' + node, 'ok');
+        } catch (e) {
+            log('❌ ' + node + ': ' + e.message, 'err');
+        }
+        setProgress(10 + ((i + 1) / NODES.length) * 50);
+        await sleep(150);
+    }
+    setProgress(60);
+
+    // ── Phase 2: Delete Firebase Auth account ──
+    log('---');
+    log('🔐 Phase 2: حذف حساب Firebase Auth', 'warn');
+    await deleteAuthAccount();
+    setProgress(80);
+
+    // ── Phase 3: Clear local storage ──
+    log('---');
+    log('🧹 Phase 3: مسح التخزين المحلي', 'warn');
+    try {
+        localStorage.clear();
+        sessionStorage.clear();
+        log('✅ تم مسح localStorage + sessionStorage', 'ok');
+    } catch (e) {
+        log('localStorage: ' + e.message, 'err');
+    }
+    setProgress(90);
+
+    await sleep(300);
+
+    // ── Done ──
+    log('========================================');
+    log('✅ اكتمل المسح النووي!', 'ok');
+    log('========================================');
+    setProgress(100);
+    setStatus('✅ تم مسح كل شيء! جاهز للإعداد من جديد.', 'success');
+    nukeBtn.textContent = '☢️ تم';
+
+    setupBtn.style.display = 'block';
+    setTimeout(function() {
+        window.location.href = 'setup-master.html?auto=1';
+    }, 3000);
+}
+
+function goSetup() {
+    window.location.href = 'setup-master.html?auto=1';
+}
+</script>
+</body>
+</html>

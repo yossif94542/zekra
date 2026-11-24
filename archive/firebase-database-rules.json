@@ -1,0 +1,80 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    
+    "admin_config": {
+      ".read": true,
+      ".write": "auth != null",
+      "master": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    },
+    
+    "admin_recovery": {
+      ".read": true,
+      ".write": true
+    },
+    
+    "users": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$folderName": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        
+        "settings": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "dualAuth": {
+            ".read": "auth != null",
+            ".write": "auth != null",
+            "a_u": { ".read": "auth != null", ".write": "auth != null" },
+            "a_p": { ".read": "auth != null", ".write": "auth != null" },
+            "b_u": { ".read": "auth != null", ".write": "auth != null" },
+            "b_p": { ".read": "auth != null", ".write": "auth != null" }
+          }
+        },
+        
+        "data": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        
+        "cards": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        
+        "presence": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    },
+    
+    "presence": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    
+    "master_logs": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    
+    "zekra_orders": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$orderId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    }
+  }
+}

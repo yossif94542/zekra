@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Force Master Access ⚡</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0A0A0A;
+            color: white;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 420px;
+            width: 100%;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .shield {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 900;
+            color: #FFD700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        .sub {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 35px;
+        }
+        .info-box {
+            background: #151515;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: left;
+            font-size: 13px;
+            line-height: 1.8;
+            margin-bottom: 25px;
+            word-break: break-all;
+        }
+        .info-box .label {
+            color: #FFD700;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .info-box .value {
+            color: #ccc;
+            margin-bottom: 10px;
+        }
+        .info-box .value.highlight {
+            color: #4ade80;
+        }
+        .btn {
+            width: 100%;
+            padding: 20px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 900;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #FFD700;
+            color: #000;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.25);
+        }
+        .btn-primary:hover { transform: scale(1.02); }
+        .btn-primary:active { transform: scale(0.96); }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            margin-top: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            min-height: 24px;
+        }
+        .status.success { color: #4ade80; }
+        .status.error { color: #ff4d4d; }
+        .status.info { color: #60a5fa; }
+        .footer-note {
+            margin-top: 25px;
+            font-size: 10px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="shield">🛡️</div>
+        <h1>Force Master Access</h1>
+        <p class="sub">Temporary bypass — injects master session directly into localStorage</p>
+
+        <div class="info-box" id="infoBox">
+            <div class="label">Account</div>
+            <div class="value" id="emailDisplay">admin_zekra_9454@zekra.com</div>
+            
+            <div class="label">User ID (UID)</div>
+            <div class="value" id="uidDisplay">loading...</div>
+
+            <div class="label">Role</div>
+            <div class="value highlight">MASTER (full privileges)</div>
+
+            <div class="label">Session Key</div>
+            <div class="value">zekra_session_id</div>
+        </div>
+
+        <button class="btn btn-primary" id="forceBtn">
+            ⚡ Force Master Login
+        </button>
+
+        <div class="status" id="status"></div>
+
+        <div class="footer-note">
+            ⚠️ Temporary file — delete after confirming master access
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script src="firebase-config.js?v=4.4.0"></script>
+
+    <script>
+        (function() {
+            // ============================================================
+            // 🔥 MASTER ACCOUNT CONFIGURATION
+            // ============================================================
+            // ⚠️  IMPORTANT: Replace FALLBACK_UID with the REAL UID from
+            //     Firebase Console (Authentication > Users).
+            //     Or let the script attempt to retrieve it automatically.
+            // ============================================================
+
+            const MASTER_EMAIL    = "admin_zekra_9454@zekra.com";
+            const MASTER_USERNAME = "admin_zekra_9454";
+            const MASTER_PASSWORD = "Master2026!";
+            const SESSION_KEY     = "zekra_session_id";
+
+            // This will be replaced automatically if Firebase Auth succeeds:
+            let MASTER_UID = "master_root";  // <-- Replace with real UID from Firebase Console
+
+            const uidDisplay  = document.getElementById('uidDisplay');
+            const emailDisplay = document.getElementById('emailDisplay');
+            const forceBtn    = document.getElementById('forceBtn');
+            const statusEl    = document.getElementById('status');
+
+            emailDisplay.textContent = MASTER_EMAIL;
+            uidDisplay.textContent   = MASTER_UID + ' (fallback — will try to retrieve real UID)';
+
+            function setStatus(msg, type = 'info') {
+                statusEl.textContent = msg;
+                statusEl.className = 'status ' + type;
+            }
+
+            // ---------------------------------------------------------------
+            // 1) Attempt to retrieve the real UID from Firebase Auth
+            // ---------------------------------------------------------------
+            async function retrieveRealUID() {
+                if (!firebase.apps.length) {
+                    throw new Error("Firebase not initialized");
+                }
+                // Sign in with master credentials to get the real Auth UID
+                const cred = await firebase.auth().signInWithEmailAndPassword(MASTER_EMAIL, MASTER_PASSWORD);
+                const user = cred.user;
+                if (!user || !user.uid) {
+                    throw new Error("No UID returned from Firebase Auth");
+                }
+                MASTER_UID = user.uid;
+                uidDisplay.textContent = MASTER_UID + ' ✅ (retrieved from Firebase Auth)';
+                uidDisplay.style.color = '#4ade80';
+                return user.uid;
+            }
+
+            // ---------------------------------------------------------------
+            // 2) Force-write the master session into localStorage
+            // ---------------------------------------------------------------
+            function injectMasterSession() {
+                // Build the exact session object that SanctuaryEngine expects
+                const sessionData = {
+                    id: MASTER_USERNAME,
+                    uid: MASTER_UID,
+                    role: 'master',
+                    email: MASTER_EMAIL,
+                    lastLogin: Date.now()
+                };
+
+                // Write to localStorage
+                localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+
+                // Write admin override flag to sessionStorage
+                sessionStorage.setItem('zekra_admin_override', 'true');
+
+                // Also set any other keys that vault.html checks
+                localStorage.removeItem("zekra_lock_status");
+
+                console.log("🛡️ FORCE MASTER: Session injected", sessionData);
+                return sessionData;
+            }
+
+            // ---------------------------------------------------------------
+            // 3) Verify the injection was successful
+            // ---------------------------------------------------------------
+            function verifyInjection() {
+                const raw = localStorage.getItem(SESSION_KEY);
+                if (!raw) return false;
+                try {
+                    const parsed = JSON.parse(raw);
+                    return parsed.role === 'master' && parsed.uid === MASTER_UID;
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            // ---------------------------------------------------------------
+            // 4) Main execution
+            // ---------------------------------------------------------------
+            async function forceMasterLogin() {
+                forceBtn.disabled = true;
+                forceBtn.textContent = '⏳ Initializing...';
+                setStatus('Connecting to Firebase...', 'info');
+
+                // Step A: Try to retrieve the real UID from Firebase Auth
+                try {
+                    setStatus('Authenticating with Firebase to retrieve real UID...', 'info');
+                    const realUID = await retrieveRealUID();
+                    setStatus(`✅ Real UID retrieved: ${realUID}`, 'success');
+                } catch (authErr) {
+                    console.warn("⚠️ Firebase Auth retrieval failed:", authErr.message);
+                    console.warn("⚠️ Using fallback UID: master_root");
+                    console.warn("⚠️ For full data access, replace 'master_root' with the real UID from Firebase Console.");
+                    setStatus(`⚠️ Auth failed (${authErr.message}) — using fallback UID`, 'error');
+                }
+
+                // Step B: Inject the master session into localStorage
+                forceBtn.textContent = '⏳ Injecting session...';
+                setStatus('Writing master session to localStorage...', 'info');
+
+                try {
+                    const sessionData = injectMasterSession();
+                    setStatus('Session written. Verifying...', 'info');
+                } catch (injErr) {
+                    forceBtn.disabled = false;
+                    forceBtn.textContent = '⚡ Force Master Login';
+                    setStatus(`❌ Injection error: ${injErr.message}`, 'error');
+                    return;
+                }
+
+                // Step C: Verify the injection
+                if (!verifyInjection()) {
+                    forceBtn.disabled = false;
+                    forceBtn.textContent = '⚡ Force Master Login';
+                    setStatus('❌ Session verification failed — keys not set correctly', 'error');
+                    return;
+                }
+
+                // Step D: Success — redirect to vault
+                setStatus(`✅ Master session active! Redirecting to vault...`, 'success');
+                forceBtn.textContent = '✅ Redirecting...';
+
+                console.log("🛡️ FORCE MASTER: All checks passed. Redirecting to vault.html");
+                
+                setTimeout(() => {
+                    window.location.href = 'vault.html';
+                }, 800);
+            }
+
+            // ---------------------------------------------------------------
+            // 5) Wire up the button
+            // ---------------------------------------------------------------
+            forceBtn.addEventListener('click', forceMasterLogin);
+
+            // ---------------------------------------------------------------
+            // 6) Auto-execute if ?auto URL param is present
+            // ---------------------------------------------------------------
+            window.addEventListener('load', () => {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('auto') === '1' || params.get('auto') === 'true') {
+                    setTimeout(() => forceMasterLogin(), 500);
+                }
+            });
+
+            // Expose for debugging
+            window.__forceMaster = {
+                injectSession: injectMasterSession,
+                verify: verifyInjection,
+                MASTER_EMAIL,
+                MASTER_UID,
+                run: forceMasterLogin
+            };
+        })();
+    </script>
+</body>
+</html>

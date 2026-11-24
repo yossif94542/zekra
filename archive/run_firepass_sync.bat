@@ -1,0 +1,19 @@
+@echo off
+title ZEKRA: Firepass Automatic Folder Synchronizer 🛡️
+echo 🛡️ ZEKRA: Initializing Firepass Folder Synchronizer...
+echo.
+
+:: Check if Python is installed
+python --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] Python is not installed or not in your system PATH!
+    echo Please install Python (3.x recommended) to run this synchronizer.
+    echo.
+    pause
+    exit /b
+)
+
+:: Run the synchronization script
+python "%~dp0firepass_sync.py"
+
+pause

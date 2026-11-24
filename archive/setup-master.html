@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zekra | Master Account Setup 🛡️</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0A0A0A;
+            color: white;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 480px;
+            width: 100%;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 900;
+            color: #FFD700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        .sub {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 35px;
+        }
+        .card {
+            background: #151515;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .card .label {
+            color: #FFD700;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .card .value {
+            color: #ccc;
+            font-size: 14px;
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
+        .card .value.success { color: #4ade80; }
+        .card .value.error { color: #ff4d4d; }
+        .card .value.info { color: #60a5fa; }
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 900;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            margin-bottom: 12px;
+        }
+        .btn-primary {
+            background: #FFD700;
+            color: #000;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.25);
+        }
+        .btn-primary:hover { transform: scale(1.02); }
+        .btn-primary:active { transform: scale(0.96); }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: transparent;
+            color: #FFD700;
+            border: 1px solid #FFD700;
+        }
+        .btn-secondary:hover { background: rgba(255, 215, 0, 0.1); }
+        .status {
+            margin-top: 16px;
+            font-size: 13px;
+            font-weight: 700;
+            min-height: 24px;
+        }
+        .status.success { color: #4ade80; }
+        .status.error { color: #ff4d4d; }
+        .status.info { color: #60a5fa; }
+        .step-list {
+            text-align: left;
+            margin: 16px 0;
+            padding-left: 20px;
+        }
+        .step-list li {
+            color: #aaa;
+            font-size: 13px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        .step-list li.done { color: #4ade80; }
+        .step-list li.fail { color: #ff4d4d; }
+        .hidden { display: none; }
+        .footer-note {
+            margin-top: 25px;
+            font-size: 10px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="font-size:48px;margin-bottom:16px;">🛡️</div>
+        <h1>Master Account Setup</h1>
+        <p class="sub">Creates the admin account in Firebase Authentication</p>
+
+        <div class="card">
+            <div class="label">Account Email</div>
+            <div class="value" id="emailDisplay">admin_zekra_9454@zekra.com</div>
+            <div class="label">Password</div>
+            <div class="value" id="passDisplay">Master2026!</div>
+            <div class="label">Status</div>
+            <div class="value" id="statusDisplay">⏳ Not started</div>
+        </div>
+
+        <button class="btn btn-primary" id="createBtn">
+            🔥 Create Master Account
+        </button>
+        <button class="btn btn-secondary hidden" id="verifyBtn">
+            ✅ Verify & Inject Session
+        </button>
+
+        <div class="status" id="status"></div>
+
+        <ul class="step-list" id="stepList">
+            <li id="step1">⏳ Initialize Firebase</li>
+            <li id="step2">⏳ Create account in Firebase Auth</li>
+            <li id="step3">⏳ Store master session in localStorage</li>
+            <li id="step4">⏳ Redirect to vault</li>
+        </ul>
+
+        <div class="footer-note">
+            ⚠️ Run this once to set up the master account
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script src="firebase-config.js?v=4.4.0"></script>
+
+    <script>
+        (function() {
+            const MASTER_EMAIL    = "admin_zekra_9454@zekra.com";
+            const MASTER_USERNAME = "admin_zekra_9454";
+            const MASTER_PASSWORD = "Master2026!";
+            const SESSION_KEY     = "zekra_session_id";
+
+            const createBtn  = document.getElementById('createBtn');
+            const verifyBtn  = document.getElementById('verifyBtn');
+            const statusEl   = document.getElementById('status');
+            const statusDisp = document.getElementById('statusDisplay');
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const step3 = document.getElementById('step3');
+            const step4 = document.getElementById('step4');
+
+            function setStep(el, text, state) {
+                const prefix = state === 'done' ? '✅' : state === 'fail' ? '❌' : '⏳';
+                el.textContent = `${prefix} ${text}`;
+                el.className = state === 'done' ? 'done' : state === 'fail' ? 'fail' : '';
+            }
+
+            function setStatus(msg, type = 'info') {
+                statusEl.textContent = msg;
+                statusEl.className = 'status ' + type;
+                statusDisp.textContent = msg;
+                statusDisp.className = 'value ' + type;
+            }
+
+            async function createMasterAccount() {
+                createBtn.disabled = true;
+                createBtn.textContent = '⏳ Working...';
+                setStatus('Initializing Firebase...', 'info');
+                setStep(step1, 'Initialize Firebase', 'done');
+
+                try {
+                    // Step 1: Check if Firebase is initialized
+                    if (!firebase.apps.length) {
+                        throw new Error("Firebase not initialized. Check firebase-config.js");
+                    }
+
+                    // Step 2: Try to sign in first (account might already exist)
+                    setStatus('Checking if master account already exists...', 'info');
+                    let uid = null;
+                    let accountCreated = false;
+
+                    try {
+                        const cred = await firebase.auth().signInWithEmailAndPassword(MASTER_EMAIL, MASTER_PASSWORD);
+                        uid = cred.user.uid;
+                        setStatus(`✅ Account already exists! UID: ${uid}`, 'success');
+                        setStep(step2, 'Account already exists in Firebase Auth', 'done');
+                    } catch (signInError) {
+                        // Account doesn't exist — create it
+                        setStatus('Account not found. Creating new master account...', 'info');
+                        
+                        // Use a secondary app instance to create the account
+                        const secondary = firebase.initializeApp(firebaseConfig, "MasterSetup_" + Date.now());
+                        try {
+                            const cred = await secondary.auth().createUserWithEmailAndPassword(MASTER_EMAIL, MASTER_PASSWORD);
+                            uid = cred.user.uid;
+                            accountCreated = true;
+                            setStatus(`✅ Master account CREATED! UID: ${uid}`, 'success');
+                            setStep(step2, 'Account created in Firebase Auth', 'done');
+                        } catch (createError) {
+                            console.error("Creation error:", createError);
+                            if (createError.code === 'auth/email-already-in-use') {
+                                // Race condition — try signing in again
+                                await secondary.auth().signOut();
+                                const cred2 = await secondary.auth().signInWithEmailAndPassword(MASTER_EMAIL, MASTER_PASSWORD);
+                                uid = cred2.user.uid;
+                                setStatus(`✅ Account already exists! UID: ${uid}`, 'success');
+                                setStep(step2, 'Account already exists in Firebase Auth', 'done');
+                            } else {
+                                throw createError;
+                            }
+                        } finally {
+                            await secondary.delete();
+                        }
+                    }
+
+                    if (!uid) {
+                        throw new Error("Failed to obtain UID");
+                    }
+
+                    // Step 3: Store master session in localStorage
+                    setStatus('Storing master session...', 'info');
+                    const sessionData = {
+                        id: MASTER_USERNAME,
+                        uid: uid,
+                        role: 'master',
+                        email: MASTER_EMAIL,
+                        lastLogin: Date.now()
+                    };
+                    localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+                    sessionStorage.setItem('zekra_admin_override', 'true');
+                    localStorage.removeItem("zekra_lock_status");
+                    setStatus(`✅ Session stored! UID: ${uid}`, 'success');
+                    setStep(step3, 'Master session stored in localStorage', 'done');
+
+                    // Step 4: Show verify button and auto-redirect
+                    setStep(step4, 'Ready to redirect to vault', 'done');
+                    setStatus(`✅ All done! UID: ${uid} — Redirecting...`, 'success');
+                    
+                    createBtn.textContent = '✅ Account Ready!';
+                    verifyBtn.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'vault.html#hq';
+                    }, 1000);
+
+                } catch (err) {
+                    console.error("Setup failed:", err);
+                    setStatus(`❌ ${err.message}`, 'error');
+                    setStep(step2, `Failed: ${err.message}`, 'fail');
+                    createBtn.disabled = false;
+                    createBtn.textContent = '🔥 Create Master Account';
+                }
+            }
+
+            createBtn.addEventListener('click', createMasterAccount);
+
+            verifyBtn.addEventListener('click', () => {
+                window.location.href = 'vault.html#hq';
+            });
+
+            // Auto-run if ?auto param is present
+            window.addEventListener('load', () => {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('auto') === '1' || params.get('auto') === 'true') {
+                    setTimeout(() => createMasterAccount(), 500);
+                }
+            });
+
+            window.__masterSetup = { createMasterAccount };
+        })();
+    </script>
+</body>
+</html>
