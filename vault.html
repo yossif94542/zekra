@@ -4290,30 +4290,13 @@
 
             <!-- 8. DIGITAL WALLET -->
             <section class="s-box w-full text-center mt-6" data-k="wal" id="sec-wal">
-                <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest block mb-1">Our
+                <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest block mb-1 font-quicksand">Our
                     Pocket</span>
-                <span class="text-2xl text-gray-800 f-ser block mb-4 font-bold">Digital Wallet 💳</span>
-                <div class="grid grid-cols-1 w-full">
-                    <div
-                        class="g-pink h-[170px] flex flex-col justify-end p-6 relative overflow-hidden text-left border-[2px] border-white shadow-[0_15px_40px_rgba(236,72,153,0.15)] w-full block">
-                        <div class="absolute top-5 left-5"><span class="text-2xl drop-shadow-sm">💕</span></div>
+                <span class="text-2xl text-gray-800 f-ser block mb-4 font-bold font-playfair">Digital Wallet 💳</span>
+                <div class="grid grid-cols-1 w-full space-y-4">
 
-                        <!-- Twin Side-by-Side Photos -->
-                        <div class="absolute top-5 right-5 flex gap-2">
-                            <img src="https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=100"
-                                class="w-12 h-12 rounded-full object-cover border-[2px] border-white shadow-[0_2px_10px_rgba(0,0,0,0.1)]">
-                            <img src="https://images.unsplash.com/photo-1522098635833-216c0b11548e?w=100"
-                                class="w-12 h-12 rounded-full object-cover border-[2px] border-white shadow-[0_2px_10px_rgba(0,0,0,0.1)]">
-                        </div>
-
-                        <div class="relative z-10 mb-2 mt-4">
-                            <h4 class="font-black text-gray-800 text-[20px] mb-1">Our First Date</h4>
-                            <p class="f-cur text-gray-500 text-[18px]">October 10, 2024 ♡</p>
-                        </div>
-                    </div>
-
-                    <!-- Our Next Memory ✨ (Replaces Admin Card 2) -->
-                    <div id="our-next-memory-card" class="g-card p-6 w-full text-left border-[2px] border-white shadow-lg bg-white/70 backdrop-blur-md rounded-[35px] mt-4">
+                    <!-- Our Next Memory ✨ (Bucket List) -->
+                    <div id="our-next-memory-card" class="g-card p-6 w-full text-left border-[2px] border-white shadow-lg bg-white/70 backdrop-blur-md rounded-[35px]">
                         <div class="flex items-center justify-between mb-4">
                             <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest font-quicksand">Bucket List</span>
                             <h4 class="font-black text-gray-800 text-lg font-playfair">Our Next Memory ✨</h4>
@@ -4343,6 +4326,25 @@
                                 <input type="text" id="new-plan-input" placeholder="e.g. Trip to Dahab, Cinema date..." class="flex-1 bg-white/90 border border-pink-200 rounded-xl px-3 py-2 text-xs font-quicksand text-left outline-none focus:border-pink-400" />
                                 <button type="button" onclick="submitNewPlan()" class="bg-pink-500 hover:bg-pink-600 text-white font-bold px-4 py-2 rounded-xl text-xs font-quicksand transition-all">Save</button>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Our First Date Card (Underneath Our Next Memory) -->
+                    <div id="wal-c1"
+                        class="g-pink min-h-[170px] flex flex-col justify-end p-6 relative overflow-hidden text-left border-[2px] border-white shadow-[0_15px_40px_rgba(236,72,153,0.15)] w-full block">
+                        <div class="absolute top-5 left-5"><span class="text-2xl drop-shadow-sm">💕</span></div>
+
+                        <!-- Twin Side-by-Side Photos -->
+                        <div class="absolute top-5 right-5 flex gap-2">
+                            <img src="https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=100"
+                                class="w-12 h-12 rounded-full object-cover border-[2px] border-white shadow-[0_2px_10px_rgba(0,0,0,0.1)]">
+                            <img src="https://images.unsplash.com/photo-1522098635833-216c0b11548e?w=100"
+                                class="w-12 h-12 rounded-full object-cover border-[2px] border-white shadow-[0_2px_10px_rgba(0,0,0,0.1)]">
+                        </div>
+
+                        <div class="relative z-10 mb-2 mt-4">
+                            <h4 class="font-black text-gray-800 text-[20px] mb-1 font-playfair">Our First Date</h4>
+                            <p class="f-cur text-gray-500 text-[18px]">October 10, 2024 ♡</p>
                         </div>
                     </div>
 
@@ -6249,18 +6251,11 @@
                     const wFont = vaultState.c1f || "'Montserrat'";
                     if (walletSec) {
                         walletSec.innerHTML = `
-                            <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest block mb-1">Our Pocket</span>
-                            <span class="text-2xl text-gray-800 f-ser block mb-4 font-bold">Digital Wallet 💳</span>
+                            <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest block mb-1 font-quicksand">Our Pocket</span>
+                            <span class="text-2xl text-gray-800 f-ser block mb-4 font-bold font-playfair">Digital Wallet 💳</span>
                             <div class="space-y-4">
-                                <div id="wal-c1" class="g-pink min-h-[170px] flex flex-col justify-end p-6 relative overflow-hidden text-left border-[2px] border-white shadow-lg w-full" 
-                                     style="font-family:${wFont}; background-image: url('${vaultState.c1b || ''}'); background-size: cover; background-position: center;">
-                                     <div class="relative z-10 pointer-events-none">
-                                        <h4 class="font-black text-gray-800 text-[20px] mb-1 font-playfair">${vaultState.c1t}</h4>
-                                        <p class="text-gray-500 text-[18px] font-quicksand">${vaultState.c1s}</p>
-                                     </div>
-                                </div>
-                                <!-- Our Next Memory ✨ (Replaces Admin Card 2) -->
-                                <div id="our-next-memory-card" class="g-card p-6 w-full text-left border-[2px] border-white shadow-lg bg-white/70 backdrop-blur-md rounded-[35px] mt-4">
+                                <!-- Our Next Memory ✨ (Bucket List) -->
+                                <div id="our-next-memory-card" class="g-card p-6 w-full text-left border-[2px] border-white shadow-lg bg-white/70 backdrop-blur-md rounded-[35px]">
                                     <div class="flex items-center justify-between mb-4">
                                         <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest font-quicksand">Bucket List</span>
                                         <h4 class="font-black text-gray-800 text-lg font-playfair">Our Next Memory ✨</h4>
@@ -6292,6 +6287,16 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Our First Date (wal-c1) Underneath -->
+                                <div id="wal-c1" class="g-pink min-h-[170px] flex flex-col justify-end p-6 relative overflow-hidden text-left border-[2px] border-white shadow-lg w-full" 
+                                     style="font-family:${wFont}; background-image: url('${vaultState.c1b || ''}'); background-size: cover; background-position: center;">
+                                     <div class="relative z-10 pointer-events-none">
+                                        <h4 class="font-black text-gray-800 text-[20px] mb-1 font-playfair">${vaultState.c1t}</h4>
+                                        <p class="text-gray-500 text-[18px] font-quicksand">${vaultState.c1s}</p>
+                                     </div>
+                                </div>
+                            </div>`;
                             </div>`;
                     }
 
