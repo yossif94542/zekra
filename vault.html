@@ -4195,39 +4195,39 @@
                 </div>
             </section>
 
-            <!-- 7. LIVE VIBE / MOOD SYNC (Placed directly above Shared Love Notes) -->
+            <!-- 7. LIVE VIBE / MOOD SYNC (Placed in place of Our Sacred Promise) -->
             <section class="s-box w-full text-center mt-6" data-k="vibe" id="sec-vibe">
                 <div class="g-card p-6 w-full relative z-10 border border-white/80 shadow-[0_10px_30px_rgba(236,72,153,0.08)] bg-white/60 backdrop-blur-md">
                     <!-- Header with Gender/Role Switcher -->
                     <div class="flex items-center justify-between mb-4">
                         <div class="text-left">
-                            <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest block">Live Vibe 💫</span>
-                            <span class="text-lg font-black text-gray-800 font-cairo">نبض القلوب اللحظي</span>
+                            <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest block font-quicksand">Live Vibe 💫</span>
+                            <span class="text-lg font-black text-gray-800 font-playfair">Heartbeats in Sync</span>
                         </div>
                         <button id="btn-gender-toggle" onclick="toggleGenderRole()"
-                            class="bg-pink-100 hover:bg-pink-200 text-pink-600 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
-                            <span id="gender-role-label">👦 أنا (هو)</span>
+                            class="bg-pink-100 hover:bg-pink-200 text-pink-600 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 font-quicksand">
+                            <span id="gender-role-label">👦 Me (Him)</span>
                             <i class="ri-refresh-line text-[11px]"></i>
                         </button>
                     </div>
 
                     <!-- Partner Live Status Card -->
-                    <div class="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200/60 rounded-[24px] p-4 mb-5 text-right flex items-center justify-between shadow-inner">
+                    <div class="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200/60 rounded-[24px] p-4 mb-5 text-left flex items-center justify-between shadow-inner">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl shadow-sm border border-pink-100">
+                            <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl shadow-sm border border-pink-100 shrink-0">
                                 <span id="partner-vibe-emoji">❤️</span>
                             </div>
-                            <div class="text-right">
-                                <span class="text-[10px] font-bold text-pink-400 block" id="partner-vibe-title">حالة الطرف الآخر:</span>
-                                <h4 class="text-sm font-black text-gray-800 font-cairo" id="partner-vibe-text">في انتظار التحديث...</h4>
+                            <div class="text-left">
+                                <span class="text-[10px] font-bold text-pink-400 block font-quicksand" id="partner-vibe-title">Partner's Vibe:</span>
+                                <h4 class="text-sm font-black text-gray-800 font-quicksand" id="partner-vibe-text">Waiting for update...</h4>
                             </div>
                         </div>
-                        <span class="text-[9px] font-bold text-gray-400 bg-white/80 px-2.5 py-1 rounded-full shadow-xs" id="partner-vibe-time">الآن 🟢</span>
+                        <span class="text-[9px] font-bold text-gray-400 bg-white/80 px-2.5 py-1 rounded-full shadow-xs whitespace-nowrap" id="partner-vibe-time">Just now 🟢</span>
                     </div>
 
                     <!-- My Status Buttons Grid -->
-                    <div class="text-right mb-2.5">
-                        <span class="text-[11px] font-bold text-gray-500 font-cairo">أنا دلوقتي حاسس بـ :</span>
+                    <div class="text-left mb-2.5">
+                        <span class="text-[11px] font-bold text-gray-500 font-quicksand">Right now I feel:</span>
                     </div>
                     <div id="vibe-buttons-container" class="grid grid-cols-3 gap-2 mb-3">
                         <!-- Populated dynamically based on gender -->
@@ -4236,74 +4236,59 @@
                     <!-- Custom Mood Trigger -->
                     <div class="flex justify-end">
                         <button onclick="openCustomMoodModal()"
-                            class="text-[11px] font-bold text-pink-500 hover:text-pink-600 bg-pink-50 hover:bg-pink-100/70 border border-pink-200/60 px-4 py-2 rounded-full transition-all flex items-center gap-1.5 active:scale-95">
-                            <i class="ri-add-line"></i> <span>+ تخصيص حالة</span>
+                            class="text-[11px] font-bold text-pink-500 hover:text-pink-600 bg-pink-50 hover:bg-pink-100/70 border border-pink-200/60 px-4 py-2 rounded-full transition-all flex items-center gap-1.5 active:scale-95 font-quicksand">
+                            <i class="ri-add-line"></i> <span>+ Custom Vibe</span>
                         </button>
                     </div>
                 </div>
             </section>
 
-            <!-- 7b. SHARED LOVE NOTES (Replaced Love Radar) -->
+            <!-- 7b. SHARED LOVE NOTES -->
             <section class="s-box w-full text-center mt-6" data-k="notes" id="sec-love-notes">
-                <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest block mb-1">Shared Love Notes</span>
-                <span class="text-2xl text-gray-800 f-ser block mb-4 font-bold">صندوق رسائلنا 💌</span>
+                <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest block mb-1 font-quicksand">Shared Love Notes</span>
+                <span class="text-2xl text-gray-800 f-ser block mb-4 font-bold font-playfair">Our Love Letters 💌</span>
 
                 <div class="g-card p-6 w-full relative z-10 border border-white/80 shadow-[0_10px_30px_rgba(236,72,153,0.08)] bg-white/60 backdrop-blur-md flex flex-col justify-between min-h-[220px]">
                     <!-- Note Meta Header -->
                     <div class="flex justify-between items-center pb-3 border-b border-pink-100/60 mb-4">
-                        <span id="note-author-badge" class="text-xs font-bold text-pink-600 bg-pink-100/70 px-3 py-1 rounded-full font-cairo flex items-center gap-1">
+                        <span id="note-author-badge" class="text-xs font-bold text-pink-600 bg-pink-100/70 px-3 py-1 rounded-full font-quicksand flex items-center gap-1">
                             <i class="ri-quill-pen-line"></i> <span>...</span>
                         </span>
-                        <span id="note-date-badge" class="text-[10px] font-bold text-gray-400 bg-white px-2.5 py-1 rounded-full border border-gray-100 shadow-xs">...</span>
+                        <span id="note-date-badge" class="text-[10px] font-bold text-gray-400 bg-white px-2.5 py-1 rounded-full border border-gray-100 shadow-xs font-quicksand">...</span>
                     </div>
 
                     <!-- Note Content Body -->
                     <div class="py-4 px-2 min-h-[90px] flex items-center justify-center text-center">
-                        <p id="note-display-text" class="text-base sm:text-lg font-bold text-gray-800 leading-relaxed font-cairo">
-                            لا توجد رسائل مسجلة بعد... اكتبوا أول رسالة لتبقى في ذكرياتكم! 💖
+                        <p id="note-display-text" class="text-base sm:text-lg font-bold text-gray-800 leading-relaxed font-quicksand">
+                            No memories written yet... Write your very first love note! 💖
                         </p>
                     </div>
 
                     <!-- Navigation Controls & Counter -->
                     <div class="flex items-center justify-between pt-4 border-t border-pink-100/60 mt-4">
-                        <button onclick="navigateNotes(-1)" class="w-9 h-9 rounded-full bg-white hover:bg-pink-50 border border-pink-100 text-pink-600 flex items-center justify-center shadow-sm active:scale-90 transition-all" title="السابق">
-                            <i class="ri-arrow-right-s-line text-lg"></i>
+                        <button onclick="navigateNotes(-1)" class="w-9 h-9 rounded-full bg-white hover:bg-pink-50 border border-pink-100 text-pink-600 flex items-center justify-center shadow-sm active:scale-90 transition-all" title="Previous">
+                            <i class="ri-arrow-left-s-line text-lg"></i>
                         </button>
                         <div class="flex items-center gap-2">
-                            <button onclick="randomNote()" class="text-[10px] font-bold text-pink-500 hover:text-pink-600 bg-white px-3 py-1.5 rounded-full border border-pink-100 shadow-xs active:scale-95 flex items-center gap-1 font-cairo">
-                                <i class="ri-shuffle-line"></i> عشوائية
+                            <button onclick="randomNote()" class="text-[10px] font-bold text-pink-500 hover:text-pink-600 bg-white px-3 py-1.5 rounded-full border border-pink-100 shadow-xs active:scale-95 flex items-center gap-1 font-quicksand">
+                                <i class="ri-shuffle-line"></i> Random
                             </button>
-                            <span id="note-counter" class="text-[10px] font-bold text-gray-400">0 / 0</span>
+                            <span id="note-counter" class="text-[10px] font-bold text-gray-400 font-quicksand">0 / 0</span>
                         </div>
-                        <button onclick="navigateNotes(1)" class="w-9 h-9 rounded-full bg-white hover:bg-pink-50 border border-pink-100 text-pink-600 flex items-center justify-center shadow-sm active:scale-90 transition-all" title="التالي">
-                            <i class="ri-arrow-left-s-line text-lg"></i>
+                        <button onclick="navigateNotes(1)" class="w-9 h-9 rounded-full bg-white hover:bg-pink-50 border border-pink-100 text-pink-600 flex items-center justify-center shadow-sm active:scale-90 transition-all" title="Next">
+                            <i class="ri-arrow-right-s-line text-lg"></i>
                         </button>
                     </div>
 
                     <!-- Add Note Trigger -->
                     <button onclick="toggleNewNoteModal(true)"
-                        class="w-full mt-4 bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-black py-3 rounded-2xl text-[11px] uppercase tracking-wider shadow-md active:scale-95 transition-all font-cairo flex items-center justify-center gap-2">
-                        <i class="ri-edit-line"></i> أضف رسالة جديدة للذكرى ✨
+                        class="w-full mt-4 bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-black py-3 rounded-2xl text-[11px] uppercase tracking-wider shadow-md active:scale-95 transition-all font-quicksand flex items-center justify-center gap-2">
+                        <i class="ri-edit-line"></i> Write a Love Note ✨
                     </button>
                 </div>
             </section>
 
-            <!-- 8. EMERGENCY MODE: Pulsing Glow Button -->
-            <section class="s-box w-full" data-k="emg" id="sec-emg">
-                <div id="btn-emg"
-                    class="neon-b w-full bg-white backdrop-blur-sm md:backdrop-blur-md rounded-[45px] py-6 px-6 cursor-pointer active:scale-95 flex items-center justify-between shadow-[0_0_30px_rgba(96,165,250,0.5)] mt-4">
-                    <div class="w-12 h-12 flex items-center justify-center bg-pink-50 rounded-full">
-                        <i class="ri-heart-pulse-fill text-2xl text-pink-500"></i>
-                    </div>
-                    <div class="text-left flex-1 px-4">
-                        <h3 class="font-black text-pink-600 text-[16px] tracking-wide mb-1">Our Sacred Promise</h3>
-                        <p class="text-[11px] text-pink-400 font-bold tracking-wide">Enter the sanctuary of peace</p>
-                    </div>
-                    <i class="ri-arrow-right-s-line text-blue-500 text-2xl font-light"></i>
-                </div>
-            </section>
-
-            <!-- 9. DIGITAL WALLET -->
+            <!-- 8. DIGITAL WALLET -->
             <section class="s-box w-full text-center mt-6" data-k="wal" id="sec-wal">
                 <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest block mb-1">Our
                     Pocket</span>
@@ -4328,35 +4313,35 @@
                     </div>
 
                     <!-- Our Next Memory ✨ (Replaces Admin Card 2) -->
-                    <div id="our-next-memory-card" class="g-card p-6 w-full text-right border-[2px] border-white shadow-lg bg-white/70 backdrop-blur-md rounded-[35px] mt-4">
+                    <div id="our-next-memory-card" class="g-card p-6 w-full text-left border-[2px] border-white shadow-lg bg-white/70 backdrop-blur-md rounded-[35px] mt-4">
                         <div class="flex items-center justify-between mb-4">
-                            <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest">Bucket List</span>
-                            <h4 class="font-black text-gray-800 text-lg font-cairo">Our Next Memory ✨</h4>
+                            <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest font-quicksand">Bucket List</span>
+                            <h4 class="font-black text-gray-800 text-lg font-playfair">Our Next Memory ✨</h4>
                         </div>
-                        <p class="text-xs text-gray-500 font-cairo mb-4">أمنيات وخطط مستنين نعيشها سوا 💕</p>
+                        <p class="text-xs text-gray-500 font-quicksand mb-4">Wishes and adventures waiting for us 💕</p>
 
                         <!-- Plans List -->
                         <div id="plans-list-container" class="space-y-2.5 mb-5 max-h-[220px] overflow-y-auto scrollbar-hide">
-                            <div class="text-center py-4 text-xs text-gray-400 font-cairo">جاري تحميل الخطط... ⏳</div>
+                            <div class="text-center py-4 text-xs text-gray-400 font-quicksand">Loading plans... ⏳</div>
                         </div>
 
                         <!-- Add Plan Form Toggle / Trigger -->
                         <button onclick="togglePlanForm()"
-                            class="w-full bg-gradient-to-r from-pink-400 to-rose-400 text-white font-black py-2.5 rounded-2xl text-[11px] font-cairo flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all">
-                            <i class="ri-add-circle-line"></i> <span>+ خطة جديدة</span>
+                            class="w-full bg-gradient-to-r from-pink-400 to-rose-400 text-white font-black py-2.5 rounded-2xl text-[11px] font-quicksand flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all">
+                            <i class="ri-add-circle-line"></i> <span>+ New Plan</span>
                         </button>
 
                         <!-- Add Plan Form (Collapsible) -->
-                        <div id="plan-add-form" class="hidden mt-3 pt-3 border-t border-pink-100 text-right">
-                            <div class="flex gap-1.5 mb-2.5 justify-end flex-wrap" id="plan-category-pills">
-                                <button type="button" onclick="selectPlanCat(this, 'خروجة', '🚗')" class="plan-cat-btn active px-3 py-1 rounded-full text-xs font-bold border border-pink-300 bg-pink-100 text-pink-600 font-cairo">🚗 خروجة</button>
-                                <button type="button" onclick="selectPlanCat(this, 'فيلم', '🎬')" class="plan-cat-btn px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 font-cairo">🎬 فيلم</button>
-                                <button type="button" onclick="selectPlanCat(this, 'سفر', '✈️')" class="plan-cat-btn px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 font-cairo">✈️ سفر</button>
-                                <button type="button" onclick="selectPlanCat(this, 'مفاجأة', '🎁')" class="plan-cat-btn px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 font-cairo">🎁 مفاجأة</button>
+                        <div id="plan-add-form" class="hidden mt-3 pt-3 border-t border-pink-100 text-left">
+                            <div class="flex gap-1.5 mb-2.5 justify-start flex-wrap" id="plan-category-pills">
+                                <button type="button" onclick="selectPlanCat(this, 'Date Out', '🚗')" class="plan-cat-btn active px-3 py-1 rounded-full text-xs font-bold border border-pink-300 bg-pink-100 text-pink-600 font-quicksand">🚗 Date Out</button>
+                                <button type="button" onclick="selectPlanCat(this, 'Movie', '🎬')" class="plan-cat-btn px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 font-quicksand">🎬 Movie</button>
+                                <button type="button" onclick="selectPlanCat(this, 'Travel', '✈️')" class="plan-cat-btn px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 font-quicksand">✈️ Travel</button>
+                                <button type="button" onclick="selectPlanCat(this, 'Surprise', '🎁')" class="plan-cat-btn px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 font-quicksand">🎁 Surprise</button>
                             </div>
                             <div class="flex gap-2">
-                                <button type="button" onclick="submitNewPlan()" class="bg-pink-500 hover:bg-pink-600 text-white font-bold px-4 py-2 rounded-xl text-xs font-cairo transition-all">حفظ</button>
-                                <input type="text" id="new-plan-input" placeholder="مثلاً: نسافر دهب أو نروح السينما..." class="flex-1 bg-white/90 border border-pink-200 rounded-xl px-3 py-2 text-xs font-cairo text-right outline-none focus:border-pink-400" />
+                                <input type="text" id="new-plan-input" placeholder="e.g. Trip to Dahab, Cinema date..." class="flex-1 bg-white/90 border border-pink-200 rounded-xl px-3 py-2 text-xs font-quicksand text-left outline-none focus:border-pink-400" />
+                                <button type="button" onclick="submitNewPlan()" class="bg-pink-500 hover:bg-pink-600 text-white font-bold px-4 py-2 rounded-xl text-xs font-quicksand transition-all">Save</button>
                             </div>
                         </div>
                     </div>
@@ -6275,36 +6260,35 @@
                                      </div>
                                 </div>
                                 <!-- Our Next Memory ✨ (Replaces Admin Card 2) -->
-                                <div id="our-next-memory-card" class="g-card p-6 w-full text-right border-[2px] border-white shadow-lg bg-white/70 backdrop-blur-md rounded-[35px] mt-4">
+                                <div id="our-next-memory-card" class="g-card p-6 w-full text-left border-[2px] border-white shadow-lg bg-white/70 backdrop-blur-md rounded-[35px] mt-4">
                                     <div class="flex items-center justify-between mb-4">
-                                        <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest">Bucket List</span>
-                                        <h4 class="font-black text-gray-800 text-lg font-cairo">Our Next Memory ✨</h4>
+                                        <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest font-quicksand">Bucket List</span>
+                                        <h4 class="font-black text-gray-800 text-lg font-playfair">Our Next Memory ✨</h4>
                                     </div>
-                                    <p class="text-xs text-gray-500 font-cairo mb-4">أمنيات وخطط مستنين نعيشها سوا 💕</p>
+                                    <p class="text-xs text-gray-500 font-quicksand mb-4">Wishes and adventures waiting for us 💕</p>
 
                                     <!-- Plans List -->
                                     <div id="plans-list-container" class="space-y-2.5 mb-5 max-h-[220px] overflow-y-auto scrollbar-hide">
-                                        <!-- Populated from Firebase future_plans -->
-                                        <div class="text-center py-4 text-xs text-gray-400 font-cairo">جاري تحميل الخطط... ⏳</div>
+                                        <div class="text-center py-4 text-xs text-gray-400 font-quicksand">Loading plans... ⏳</div>
                                     </div>
 
                                     <!-- Add Plan Form Toggle / Trigger -->
                                     <button onclick="togglePlanForm()"
-                                        class="w-full bg-gradient-to-r from-pink-400 to-rose-400 text-white font-black py-2.5 rounded-2xl text-[11px] font-cairo flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all">
-                                        <i class="ri-add-circle-line"></i> <span>+ خطة جديدة</span>
+                                        class="w-full bg-gradient-to-r from-pink-400 to-rose-400 text-white font-black py-2.5 rounded-2xl text-[11px] font-quicksand flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all">
+                                        <i class="ri-add-circle-line"></i> <span>+ New Plan</span>
                                     </button>
 
                                     <!-- Add Plan Form (Collapsible) -->
-                                    <div id="plan-add-form" class="hidden mt-3 pt-3 border-t border-pink-100 text-right">
-                                        <div class="flex gap-1.5 mb-2.5 justify-end flex-wrap" id="plan-category-pills">
-                                            <button type="button" onclick="selectPlanCat(this, 'خروجة', '🚗')" class="plan-cat-btn active px-3 py-1 rounded-full text-xs font-bold border border-pink-300 bg-pink-100 text-pink-600 font-cairo">🚗 خروجة</button>
-                                            <button type="button" onclick="selectPlanCat(this, 'فيلم', '🎬')" class="plan-cat-btn px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 font-cairo">🎬 فيلم</button>
-                                            <button type="button" onclick="selectPlanCat(this, 'سفر', '✈️')" class="plan-cat-btn px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 font-cairo">✈️ سفر</button>
-                                            <button type="button" onclick="selectPlanCat(this, 'مفاجأة', '🎁')" class="plan-cat-btn px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 font-cairo">🎁 مفاجأة</button>
+                                    <div id="plan-add-form" class="hidden mt-3 pt-3 border-t border-pink-100 text-left">
+                                        <div class="flex gap-1.5 mb-2.5 justify-start flex-wrap" id="plan-category-pills">
+                                            <button type="button" onclick="selectPlanCat(this, 'Date Out', '🚗')" class="plan-cat-btn active px-3 py-1 rounded-full text-xs font-bold border border-pink-300 bg-pink-100 text-pink-600 font-quicksand">🚗 Date Out</button>
+                                            <button type="button" onclick="selectPlanCat(this, 'Movie', '🎬')" class="plan-cat-btn px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 font-quicksand">🎬 Movie</button>
+                                            <button type="button" onclick="selectPlanCat(this, 'Travel', '✈️')" class="plan-cat-btn px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 font-quicksand">✈️ Travel</button>
+                                            <button type="button" onclick="selectPlanCat(this, 'Surprise', '🎁')" class="plan-cat-btn px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 font-quicksand">🎁 Surprise</button>
                                         </div>
                                         <div class="flex gap-2">
-                                            <button type="button" onclick="submitNewPlan()" class="bg-pink-500 hover:bg-pink-600 text-white font-bold px-4 py-2 rounded-xl text-xs font-cairo transition-all">حفظ</button>
-                                            <input type="text" id="new-plan-input" placeholder="مثلاً: نسافر دهب أو نروح السينما..." class="flex-1 bg-white/90 border border-pink-200 rounded-xl px-3 py-2 text-xs font-cairo text-right outline-none focus:border-pink-400" />
+                                            <input type="text" id="new-plan-input" placeholder="e.g. Trip to Dahab, Cinema date..." class="flex-1 bg-white/90 border border-pink-200 rounded-xl px-3 py-2 text-xs font-quicksand text-left outline-none focus:border-pink-400" />
+                                            <button type="button" onclick="submitNewPlan()" class="bg-pink-500 hover:bg-pink-600 text-white font-bold px-4 py-2 rounded-xl text-xs font-quicksand transition-all">Save</button>
                                         </div>
                                     </div>
                                 </div>
@@ -10722,15 +10706,15 @@
 
     <!-- MODAL: Custom Mood Creator -->
     <div id="modal-custom-mood" class="hidden fixed inset-0 z-[100050] bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-[35px] p-6 w-full max-w-sm shadow-2xl border border-pink-100 text-right animate-in zoom-in-95 duration-200">
+        <div class="bg-white rounded-[35px] p-6 w-full max-w-sm shadow-2xl border border-pink-100 text-left animate-in zoom-in-95 duration-200">
             <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+                <h3 class="text-base font-black text-gray-800 font-playfair">Add Custom Vibe ✨</h3>
                 <button onclick="closeCustomMoodModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-sm"><i class="ri-close-line"></i></button>
-                <h3 class="text-base font-black text-gray-800 font-cairo">إضافة حالة مخصصة ✨</h3>
             </div>
             
             <div class="mb-3">
-                <label class="text-[11px] font-bold text-gray-500 block mb-1 font-cairo">اختر إيموجي:</label>
-                <div class="flex gap-2 justify-end mb-2" id="custom-emoji-picker">
+                <label class="text-[11px] font-bold text-gray-500 block mb-1 font-quicksand">Choose Emoji:</label>
+                <div class="flex gap-2 justify-start mb-2" id="custom-emoji-picker">
                     <span onclick="pickCustomEmoji('🎮')" class="cursor-pointer text-2xl hover:scale-125 transition-transform p-1">🎮</span>
                     <span onclick="pickCustomEmoji('😴')" class="cursor-pointer text-2xl hover:scale-125 transition-transform p-1">😴</span>
                     <span onclick="pickCustomEmoji('🎧')" class="cursor-pointer text-2xl hover:scale-125 transition-transform p-1">🎧</span>
@@ -10742,41 +10726,41 @@
             </div>
 
             <div class="mb-5">
-                <label class="text-[11px] font-bold text-gray-500 block mb-1 font-cairo">نص الحالة:</label>
-                <input type="text" id="custom-text-input" placeholder="مثال: بلعب بلايستيشن / بذاكر" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3 text-xs font-bold text-gray-800 outline-none focus:border-pink-400 font-cairo text-right">
+                <label class="text-[11px] font-bold text-gray-500 block mb-1 font-quicksand">Vibe Description:</label>
+                <input type="text" id="custom-text-input" placeholder="e.g. Gaming, Studying, Thinking of you" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3 text-xs font-bold text-gray-800 outline-none focus:border-pink-400 font-quicksand text-left">
             </div>
 
-            <button onclick="saveCustomMoodSubmit()" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold py-3 rounded-2xl text-xs font-cairo shadow-md active:scale-95 transition-all">
-                حفظ وتفعيل الحالة 💖
+            <button onclick="saveCustomMoodSubmit()" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold py-3 rounded-2xl text-xs font-quicksand shadow-md active:scale-95 transition-all">
+                Save & Set Vibe 💖
             </button>
         </div>
     </div>
 
     <!-- MODAL: Add New Love Note -->
     <div id="modal-new-note" class="hidden fixed inset-0 z-[100050] bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-[35px] p-6 w-full max-w-sm shadow-2xl border border-pink-100 text-right animate-in zoom-in-95 duration-200">
+        <div class="bg-white rounded-[35px] p-6 w-full max-w-sm shadow-2xl border border-pink-100 text-left animate-in zoom-in-95 duration-200">
             <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+                <h3 class="text-base font-black text-gray-800 font-playfair">New Love Note 💌</h3>
                 <button onclick="toggleNewNoteModal(false)" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-sm"><i class="ri-close-line"></i></button>
-                <h3 class="text-base font-black text-gray-800 font-cairo">رسالة جديدة في الصندوق 💌</h3>
             </div>
 
             <div class="mb-3">
-                <label class="text-[11px] font-bold text-gray-500 block mb-1 font-cairo">اسم الكاتب:</label>
-                <input type="text" id="new-note-author" placeholder="اسمك..." class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3 text-xs font-bold text-gray-800 outline-none focus:border-pink-400 font-cairo text-right">
+                <label class="text-[11px] font-bold text-gray-500 block mb-1 font-quicksand">Author Name:</label>
+                <input type="text" id="new-note-author" placeholder="Your name..." class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3 text-xs font-bold text-gray-800 outline-none focus:border-pink-400 font-quicksand text-left">
             </div>
 
             <div class="mb-3">
-                <label class="text-[11px] font-bold text-gray-500 block mb-1 font-cairo">التاريخ:</label>
-                <input type="date" id="new-note-date" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3 text-xs font-bold text-gray-800 outline-none focus:border-pink-400 font-cairo text-right">
+                <label class="text-[11px] font-bold text-gray-500 block mb-1 font-quicksand">Date:</label>
+                <input type="date" id="new-note-date" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3 text-xs font-bold text-gray-800 outline-none focus:border-pink-400 font-quicksand text-left">
             </div>
 
             <div class="mb-5">
-                <label class="text-[11px] font-bold text-gray-500 block mb-1 font-cairo">نص الرسالة:</label>
-                <textarea id="new-note-content" rows="4" placeholder="اكتب كل مشاعرك هنا... ✨" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3 text-xs font-bold text-gray-800 outline-none focus:border-pink-400 font-cairo text-right"></textarea>
+                <label class="text-[11px] font-bold text-gray-500 block mb-1 font-quicksand">Your Message:</label>
+                <textarea id="new-note-content" rows="4" placeholder="Pour your heart out here... ✨" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3 text-xs font-bold text-gray-800 outline-none focus:border-pink-400 font-quicksand text-left"></textarea>
             </div>
 
-            <button onclick="submitNewNote()" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold py-3 rounded-2xl text-xs font-cairo shadow-md active:scale-95 transition-all">
-                حفظ الرسالة في ذكرياتنا 💌
+            <button onclick="submitNewNote()" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold py-3 rounded-2xl text-xs font-quicksand shadow-md active:scale-95 transition-all">
+                Save to Memories 💌
             </button>
         </div>
     </div>
@@ -10787,7 +10771,7 @@
     // ========================================================
     (function() {
         let currentGender = localStorage.getItem('zekra_user_gender') || (window.currentSide === 'B' ? 'female' : 'male');
-        let selectedPlanCategory = 'خروجة';
+        let selectedPlanCategory = 'Date Out';
         let selectedPlanIcon = '🚗';
         let loveNotesList = [];
         let currentNoteIndex = 0;
@@ -10795,21 +10779,21 @@
 
         // --- 1. LIVE VIBE / MOOD SYNC ENGINE ---
         const malePresets = [
-            { id: 'm1', emoji: '🥺', text: 'وحشتيني' },
-            { id: 'm2', emoji: '🍔', text: 'جعان' },
-            { id: 'm3', emoji: '🥱', text: 'زهقان' },
-            { id: 'm4', emoji: '💼', text: 'مشغول' },
-            { id: 'm5', emoji: '☕', text: 'فاضي' },
-            { id: 'm6', emoji: '🤕', text: 'تعبان' }
+            { id: 'm1', emoji: '🥺', text: 'Missing You' },
+            { id: 'm2', emoji: '🍔', text: 'Hungry' },
+            { id: 'm3', emoji: '🥱', text: 'Bored' },
+            { id: 'm4', emoji: '💼', text: 'Busy' },
+            { id: 'm5', emoji: '☕', text: 'Free' },
+            { id: 'm6', emoji: '🩹', text: 'Tired' }
         ];
 
         const femalePresets = [
-            { id: 'f1', emoji: '🥺', text: 'وحشتني' },
-            { id: 'f2', emoji: '🍕', text: 'جعانة' },
-            { id: 'f3', emoji: '🥱', text: 'زهقانة' },
-            { id: 'f4', emoji: '💼', text: 'مشغولة' },
-            { id: 'f5', emoji: '☕', text: 'فاضية' },
-            { id: 'f6', emoji: '🤕', text: 'تعبانة' }
+            { id: 'f1', emoji: '🥺', text: 'Missing You' },
+            { id: 'f2', emoji: '🍕', text: 'Hungry' },
+            { id: 'f3', emoji: '🥱', text: 'Bored' },
+            { id: 'f4', emoji: '💼', text: 'Busy' },
+            { id: 'f5', emoji: '☕', text: 'Free' },
+            { id: 'f6', emoji: '🩹', text: 'Tired' }
         ];
 
         window.toggleGenderRole = function() {
@@ -10823,7 +10807,7 @@
         function updateGenderLabel() {
             const lbl = document.getElementById('gender-role-label');
             if (lbl) {
-                lbl.innerText = currentGender === 'male' ? '👦 أنا (هو)' : '👧 أنا (هي)';
+                lbl.innerText = currentGender === 'male' ? '👦 Me (Him)' : '👧 Me (Her)';
             }
         }
 
@@ -10840,7 +10824,7 @@
             allMoods.forEach(m => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'vibe-btn bg-white hover:bg-pink-50 border border-pink-100 hover:border-pink-300 rounded-[20px] p-2.5 text-xs font-bold text-gray-700 font-cairo shadow-2xs transition-all flex items-center justify-center gap-1.5 active:scale-95';
+                btn.className = 'vibe-btn bg-white hover:bg-pink-50 border border-pink-100 hover:border-pink-300 rounded-[20px] p-2.5 text-xs font-bold text-gray-700 font-quicksand shadow-2xs transition-all flex items-center justify-center gap-1.5 active:scale-95';
                 btn.setAttribute('data-text', m.text);
                 btn.innerHTML = `<span class="text-base select-none">${m.emoji}</span> <span class="truncate">${m.text}</span>`;
                 btn.onclick = () => selectMyVibe(m.emoji, m.text);
@@ -10851,7 +10835,7 @@
         window.selectMyVibe = async function(emoji, text) {
             const cardId = window.currentUser || 'yoyo&jojo';
             const myRole = currentGender;
-            const myName = window.currentPartnerName || (myRole === 'male' ? 'يوسف' : 'جوجو');
+            const myName = window.currentPartnerName || (myRole === 'male' ? 'Youssef' : 'Jojo');
 
             // Highlight button
             document.querySelectorAll('.vibe-btn').forEach(b => {
@@ -10920,12 +10904,12 @@
             const titleEl = document.getElementById('partner-vibe-title');
 
             if (emojiEl) emojiEl.innerText = data.emoji || '❤️';
-            if (textEl) textEl.innerText = data.text || 'في انتظار التحديث...';
-            if (titleEl && data.by) titleEl.innerText = `حالة ${data.by}:`;
+            if (textEl) textEl.innerText = data.text || 'Waiting for update...';
+            if (titleEl && data.by) titleEl.innerText = `${data.by}'s Vibe:`;
             if (timeEl && data.timestamp) {
                 const diffMin = Math.floor((Date.now() - data.timestamp) / 60000);
-                if (diffMin < 1) timeEl.innerText = 'الآن 🟢';
-                else if (diffMin < 60) timeEl.innerText = `منذ ${diffMin} دقيقة`;
+                if (diffMin < 1) timeEl.innerText = 'Just now 🟢';
+                else if (diffMin < 60) timeEl.innerText = `${diffMin}m ago`;
                 else timeEl.innerText = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }
         }
@@ -10945,7 +10929,7 @@
         window.saveCustomMoodSubmit = async function() {
             const emoji = document.getElementById('custom-emoji-input').value.trim() || '✨';
             const text = document.getElementById('custom-text-input').value.trim();
-            if (!text) return alert("اكتب نص الحالة أولاً! 🌸");
+            if (!text) return alert("Please enter vibe text! 🌸");
 
             const cardId = window.currentUser || 'yoyo&jojo';
             const newMood = { emoji, text, id: 'c_' + Date.now() };
@@ -10970,7 +10954,7 @@
                 const authorInp = document.getElementById('new-note-author');
                 const dateInp = document.getElementById('new-note-date');
                 if (authorInp && !authorInp.value) {
-                    authorInp.value = window.currentPartnerName || (currentGender === 'male' ? 'يوسف' : 'جوجو');
+                    authorInp.value = window.currentPartnerName || (currentGender === 'male' ? 'Youssef' : 'Jojo');
                 }
                 if (dateInp && !dateInp.value) {
                     dateInp.value = new Date().toISOString().split('T')[0];
@@ -10984,7 +10968,7 @@
             const author = document.getElementById('new-note-author').value.trim() || 'Anonymous';
             const date = document.getElementById('new-note-date').value || new Date().toISOString().split('T')[0];
             const content = document.getElementById('new-note-content').value.trim();
-            if (!content) return alert("اكتب نص الرسالة أولاً! 💌");
+            if (!content) return alert("Please write a message! 💌");
 
             const cardId = window.currentUser || 'yoyo&jojo';
             const noteData = {
@@ -11025,16 +11009,16 @@
             const counterEl = document.getElementById('note-counter');
 
             if (!loveNotesList.length) {
-                if (textEl) textEl.innerText = "لا توجد رسائل بعد... اكتبوا أول رسالة لتبقى في ذكرياتكم! 💖";
-                if (authorBadge) authorBadge.innerHTML = `<i class="ri-quill-pen-line"></i> <span>ذكرياتنا</span>`;
-                if (dateBadge) dateBadge.innerText = "الآن";
+                if (textEl) textEl.innerText = "No memories written yet... Write your very first love note! 💖";
+                if (authorBadge) authorBadge.innerHTML = `<i class="ri-quill-pen-line"></i> <span>Our Memories</span>`;
+                if (dateBadge) dateBadge.innerText = "Now";
                 if (counterEl) counterEl.innerText = "0 / 0";
                 return;
             }
 
             const note = loveNotesList[currentNoteIndex];
             if (textEl) textEl.innerText = note.text || '';
-            if (authorBadge) authorBadge.innerHTML = `<i class="ri-quill-pen-line"></i> <span>${note.author || 'الحبيب'}</span>`;
+            if (authorBadge) authorBadge.innerHTML = `<i class="ri-quill-pen-line"></i> <span>${note.author || 'Sweetheart'}</span>`;
             if (dateBadge) dateBadge.innerText = note.date || '';
             if (counterEl) counterEl.innerText = `${currentNoteIndex + 1} / ${loveNotesList.length}`;
         }
@@ -11071,7 +11055,7 @@
         window.submitNewPlan = async function() {
             const inp = document.getElementById('new-plan-input');
             const text = inp ? inp.value.trim() : '';
-            if (!text) return alert("اكتب الخطة أولاً! ✨");
+            if (!text) return alert("Please enter your plan! ✨");
 
             const cardId = window.currentUser || 'yoyo&jojo';
             const planData = {
@@ -11080,7 +11064,7 @@
                 icon: selectedPlanIcon,
                 completed: false,
                 timestamp: Date.now(),
-                createdBy: window.currentPartnerName || (currentGender === 'male' ? 'يوسف' : 'جوجو')
+                createdBy: window.currentPartnerName || (currentGender === 'male' ? 'Youssef' : 'Jojo')
             };
 
             if (window.firebaseData) {
@@ -11110,7 +11094,7 @@
             const container = document.getElementById('plans-list-container');
             if (!container) return;
             if (!futurePlansList.length) {
-                container.innerHTML = `<div class="text-center py-4 text-xs text-gray-400 font-cairo">لا توجد خطط مضافة بعد... اكتبوا أول أمنية سوا! ✨</div>`;
+                container.innerHTML = `<div class="text-center py-4 text-xs text-gray-400 font-quicksand">No future plans added yet... Add your first wish together! ✨</div>`;
                 return;
             }
 
@@ -11125,9 +11109,9 @@
                         <span class="text-sm w-6 h-6 rounded-full flex items-center justify-center ${p.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}">
                             ${p.completed ? '✔️' : '○'}
                         </span>
-                        <span class="text-[10px] bg-pink-50 text-pink-600 px-2 py-0.5 rounded-full font-bold font-cairo">${p.icon || '🚗'} ${p.category || 'خطة'}</span>
+                        <span class="text-[10px] bg-pink-50 text-pink-600 px-2 py-0.5 rounded-full font-bold font-quicksand">${p.icon || '🚗'} ${p.category || 'Plan'}</span>
                     </div>
-                    <span class="text-xs font-bold font-cairo truncate max-w-[190px] ${p.completed ? 'line-through text-gray-400' : 'text-gray-800'}">
+                    <span class="text-xs font-bold font-quicksand truncate max-w-[190px] ${p.completed ? 'line-through text-gray-400' : 'text-gray-800'}">
                         ${p.text}
                     </span>
                 `;
