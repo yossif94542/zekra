@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <!-- Content Security Policy: Resolve CSP/CORB & eval blocks -->
@@ -5566,6 +5566,8 @@
 
             let currentUser = currentUserSession.id;
             let currentRole = SanctuaryEngine.getCurrentRole() || 'user';
+            let currentSide = currentUserSession.side || localStorage.getItem('zekra_partner_side') || 'A';
+            let currentPartnerName = currentUserSession.partnerName || localStorage.getItem('zekra_partner_name') || '';
             window.gs = (id, prop, val) => { const e = document.getElementById(id); if (e) { if(val !== undefined) e.style[prop] = val; return e.style[prop]; } return null; };
 
             function triggerGlobalLoading(state) {
@@ -5789,7 +5791,7 @@
 
                 if (isSpotify) {
                     spr.classList.remove('hidden'); vpl.classList.add('hidden');
-                    let embedUrl = url.split('?')[0];
+                    let embedUrl = url.split('?')[0].split('&')[0].replace(/open\.spotify\.com\/intl-[a-z]+\//i, 'open.spotify.com/');
                     if (embedUrl.includes('spotify.com') && !embedUrl.includes('/embed/')) {
                         if (embedUrl.includes('/track/')) embedUrl = embedUrl.replace('/track/', '/embed/track/');
                         else if (embedUrl.includes('/playlist/')) embedUrl = embedUrl.replace('/playlist/', '/embed/playlist/');
@@ -7444,6 +7446,7 @@
 
                         if (typeof updateSoulUI === 'function') updateSoulUI();
                         if (typeof syncUI === 'function') syncUI();
+                        if (btn.id === 'btn-sv-music' && typeof renderSmartPlayer === 'function') renderSmartPlayer(vaultState.a, vaultState.lyrics);
 
                         console.log('✅ Saved locally & pushed to cloud.');
                         closeAdminPanel();
@@ -8935,6 +8938,10 @@
                         if (!users) {
                             treeEl.innerHTML = '<p class="text-center text-gray-500 py-20 font-black uppercase text-[10px]">No Nodes Found in Root Directory.</p>';
                             return;
+                        }
+
+                        if (typeof SanctuaryEngine.syncAllVaultsToLookup === 'function') {
+                            SanctuaryEngine.syncAllVaultsToLookup().catch(() => {});
                         }
 
                         // Build the tree HTML

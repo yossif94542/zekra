@@ -71,6 +71,21 @@
          * Returns "folder" | "username" | false. Used to prevent the
          * "create several users with the same name and everything gets mixed up" bug.
          */
+        /**
+         * Converts any username/folder string (Arabic, English, special characters)
+         * to a safe Firebase Realtime Database path key.
+         */
+        static toLookupKey(str) {
+            if (!str) return '';
+            return encodeURIComponent(str.toString().trim().toLowerCase())
+                .replace(/\./g, '%2E')
+                .replace(/\$/g, '%24')
+                .replace(/\[/g, '%5B')
+                .replace(/\]/g, '%5D')
+                .replace(/#/g, '%23')
+                .replace(/\//g, '%2F');
+        }
+
         static async isIdentityTaken(folderName, userA, userB) {
             if (!Engine.isMaster()) throw new Error("Unauthorized");
             const lowerFolder = (folderName || "").toLowerCase();
@@ -257,64 +272,88 @@
             } catch (e) { /* non-critical */ }
 
             // ★ FOLDER LOOKUP: Find user by Global UID, Parent A, OR Parent B username
-            // Then validate the password against the stored credentials
+            // âک… PUBLIC PARTNER & FOLDER LOOKUP
+            // Reads from admin_recovery/partner_lookup which has .read: true for all clients
+            const lookupKey = Engine.toLookupKey(username);
             let targetFolder = null;
-            let side = null;
+            let side = 'A';
             let matchedPassword = null;
+            let folderAuthEmail = null;
+            let folderAuthPass = null;
+            let partnerDisplayName = username;
+
             try {
-                const userSnap = await firebase.database().ref('users').once('value');
-                const allUsers = userSnap.val() || {};
-                for (const [folderName, data] of Object.entries(allUsers)) {
-                    const auth = data?.settings?.dualAuth || {};
-                    const identity = data?.identity || {};
-                    // Check Parent A username (from identity or dualAuth)
-                    const parentA = identity.parentA || auth.a_u || '';
-                    const parentB = identity.parentB || auth.b_u || '';
-                    const passA = auth.a_p || '';
-                    const passB = auth.b_p || passA;
-                    
-                    if (folderName.toLowerCase() === lowerUser) {
-                        // Global UID login - accept either password
-                        targetFolder = folderName;
-                        side = null;
-                        matchedPassword = passA || passB;
-                        break;
-                    } else if (parentA.toLowerCase() === lowerUser) {
-                        // Parent A login - use Parent A's password
-                        targetFolder = folderName;
-                        side = 'A';
-                        matchedPassword = passA;
-                        break;
-                    } else if (parentB.toLowerCase() === lowerUser) {
-                        // Parent B login - use Parent B's password
-                        targetFolder = folderName;
-                        side = 'B';
-                        matchedPassword = passB || passA;
-                        break;
+                const lookupSnap = await firebase.database().ref('admin_recovery/partner_lookup/' + lookupKey).once('value');
+                let rec = lookupSnap.val();
+                
+                // If direct key not found, search the lookup table
+                if (!rec) {
+                    const allLookupSnap = await firebase.database().ref('admin_recovery/partner_lookup').once('value');
+                    const allRecs = allLookupSnap.val() || {};
+                    const cleanU = username.trim().toLowerCase();
+                    for (const [k, v] of Object.entries(allRecs)) {
+                        if (k.toLowerCase() === cleanU || (v.name && v.name.toLowerCase() === cleanU) || (v.folder && v.folder.toLowerCase() === cleanU)) {
+                            rec = v;
+                            break;
+                        }
                     }
                 }
-            } catch (e) { /* folder lookup failed — non-critical */ }
 
-            // 2. Identity-based authentication using matched folder credentials
-            if (targetFolder && matchedPassword) {
-                const folderEmail = targetFolder.toLowerCase() + '@zekra.app';
-                try {
-                    const cred = await firebase.auth().signInWithEmailAndPassword(folderEmail, matchedPassword);
-                    const user = cred.user;
-                    const role = 'user';
+                if (rec) {
+                    targetFolder = rec.folder;
+                    side = rec.side || 'A';
+                    matchedPassword = rec.pass;
+                    folderAuthEmail = rec.authEmail || (rec.folder.toLowerCase() + '@zekra.app');
+                    folderAuthPass = rec.authPass || rec.pass || safePass;
+                    partnerDisplayName = rec.name || username;
+
+                    // Verify password
+                    const inputPass = password.trim();
+                    const passMatches = (inputPass === rec.pass) || 
+                                        (rec.altPass && inputPass === rec.altPass) ||
+                                        (inputPass.padEnd(6, '0') === (rec.pass || '').padEnd(6, '0'));
+                    
+                    if (!passMatches) {
+                        throw new Error("â‌Œ Invalid Password for " + username + " ًں”’ / ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط؛ظٹط± طµط­ظٹط­ط©");
+                    }
+
+                    // Authenticate with Firebase Auth using shared folder account
+                    let authUid = 'partner_' + targetFolder;
+                    try {
+                        const cred = await firebase.auth().signInWithEmailAndPassword(folderAuthEmail, folderAuthPass);
+                        if (cred && cred.user) authUid = cred.user.uid;
+                    } catch (signInErr) {
+                        console.warn("Folder Auth sign-in note:", signInErr.message);
+                        if (firebase.auth().currentUser) {
+                            authUid = firebase.auth().currentUser.uid;
+                        }
+                    }
+
                     const sessionData = {
-                        id: targetFolder, uid: user.uid, role: role, lastLogin: Date.now()
+                        id: targetFolder,
+                        uid: authUid,
+                        role: 'user',
+                        side: side,
+                        partnerName: partnerDisplayName,
+                        lastLogin: Date.now()
                     };
-                    if (side) sessionData.side = side;
+
                     localStorage.setItem(Engine.SESSION_KEY, JSON.stringify(sessionData));
                     localStorage.setItem('userRole', 'user');
-                    return { success: true, user: targetFolder, role: role, side: side };
-                } catch (authError) {
-                    console.warn('Folder auth failed, trying standard flow:', authError.message);
+                    localStorage.setItem('zekra_partner_side', side);
+                    localStorage.setItem('zekra_partner_name', partnerDisplayName);
+
+                    return { success: true, user: targetFolder, role: 'user', side: side, partnerName: partnerDisplayName };
                 }
+            } catch (lookupErr) {
+                if (lookupErr.message && lookupErr.message.includes("Invalid Password")) {
+                    throw lookupErr;
+                }
+                console.warn("Public partner lookup fallback:", lookupErr);
             }
 
-            // 3. Standard Firebase Auth Flow with Auto-Provision for regular users
+            
+
             const email = lowerUser.includes('@') ? lowerUser : lowerUser + "@zekra.app";
             
             try {
@@ -632,6 +671,34 @@
                         }
                     }
                 });
+                                // 6. Register in Public Partner Lookup (admin_recovery/partner_lookup)
+                try {
+                    const lookupUpdates = {};
+                    const folderAuthMail = email;
+                    const keyA = Engine.toLookupKey(userA);
+                    const keyB = Engine.toLookupKey(userB);
+                    const keyFolder = Engine.toLookupKey(folderName);
+
+                    if (keyA) {
+                        lookupUpdates[keyA] = {
+                            folder: folderName, side: 'A', pass: passA, name: userA, authEmail: folderAuthMail, authPass: safePassA
+                        };
+                    }
+                    if (keyB) {
+                        lookupUpdates[keyB] = {
+                            folder: folderName, side: 'B', pass: passB, name: userB, authEmail: folderAuthMail, authPass: safePassA
+                        };
+                    }
+                    if (keyFolder) {
+                        lookupUpdates[keyFolder] = {
+                            folder: folderName, side: 'A', pass: passA, altPass: passB, name: folderName, authEmail: folderAuthMail, authPass: safePassA
+                        };
+                    }
+                    await firebase.database().ref('admin_recovery/partner_lookup').update(lookupUpdates);
+                    console.log("âœ… Partner lookup indexed for:", userA, "&", userB);
+                } catch(e) {
+                    console.warn("Could not index partner lookup:", e.message);
+                }
                 return true;
             } catch (e) {
                 console.error("User creation failed", e);
@@ -708,12 +775,82 @@
                         }
                     }
                 });
+                                // 6. Register in Public Partner Lookup (admin_recovery/partner_lookup)
+                try {
+                    const lookupUpdates = {};
+                    const folderAuthMail = email;
+                    const keyA = Engine.toLookupKey(userA);
+                    const keyB = Engine.toLookupKey(userB);
+                    const keyFolder = Engine.toLookupKey(folderName);
+
+                    if (keyA) {
+                        lookupUpdates[keyA] = {
+                            folder: folderName, side: 'A', pass: passA, name: userA, authEmail: folderAuthMail, authPass: safePassA
+                        };
+                    }
+                    if (keyB) {
+                        lookupUpdates[keyB] = {
+                            folder: folderName, side: 'B', pass: passB, name: userB, authEmail: folderAuthMail, authPass: safePassA
+                        };
+                    }
+                    if (keyFolder) {
+                        lookupUpdates[keyFolder] = {
+                            folder: folderName, side: 'A', pass: passA, altPass: passB, name: folderName, authEmail: folderAuthMail, authPass: safePassA
+                        };
+                    }
+                    await firebase.database().ref('admin_recovery/partner_lookup').update(lookupUpdates);
+                    console.log("âœ… Partner lookup indexed for:", userA, "&", userB);
+                } catch(e) {
+                    console.warn("Could not index partner lookup:", e.message);
+                }
                 return true;
             } catch (e) {
                 console.error("Folder creation failed", e);
                 throw e;
             } finally {
                 await secondary.delete();
+            }
+        }
+
+
+        /**
+         * Re-indexes all existing vaults and their partners into admin_recovery/partner_lookup
+         */
+        static async syncAllVaultsToLookup() {
+            try {
+                const snap = await firebase.database().ref('users').once('value');
+                const users = snap.val() || {};
+                const updates = {};
+                for (const [folderName, data] of Object.entries(users)) {
+                    if (folderName === 'master' || !data) continue;
+                    const auth = data?.settings?.dualAuth || {};
+                    const identity = data?.identity || {};
+                    const userA = identity.parentA || auth.a_u || data?.data?.parentA_name || '';
+                    const userB = identity.parentB || auth.b_u || data?.data?.parentB_name || '';
+                    const passA = auth.a_p || '00000000';
+                    const passB = auth.b_p || passA;
+                    const email = folderName.toLowerCase() + '@zekra.app';
+
+                    if (userA) {
+                        updates[Engine.toLookupKey(userA)] = {
+                            folder: folderName, side: 'A', pass: passA, name: userA, authEmail: email, authPass: passA
+                        };
+                    }
+                    if (userB) {
+                        updates[Engine.toLookupKey(userB)] = {
+                            folder: folderName, side: 'B', pass: passB, name: userB, authEmail: email, authPass: passA
+                        };
+                    }
+                    updates[Engine.toLookupKey(folderName)] = {
+                        folder: folderName, side: 'A', pass: passA, altPass: passB, name: folderName, authEmail: email, authPass: passA
+                    };
+                }
+                if (Object.keys(updates).length > 0) {
+                    await firebase.database().ref('admin_recovery/partner_lookup').update(updates);
+                    console.log('âœ… Partner lookup synchronized successfully for', Object.keys(updates).length, 'keys');
+                }
+            } catch (e) {
+                console.warn('syncAllVaultsToLookup skipped:', e.message);
             }
         }
 

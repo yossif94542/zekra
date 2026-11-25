@@ -10,12 +10,12 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="firebase-config.js"></script>
     <script src="sanctuary-engine.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&family=Cairo:wght@600;700;900&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #FFF5F7;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Poppins', 'Cairo', sans-serif;
             height: 100dvh;
             display: flex;
             align-items: center;
@@ -106,7 +106,7 @@ window.addEventListener('load',function(){
 });
 f.addEventListener('submit',function(e){
     e.preventDefault();
-    var u=document.getElementById('u').value.trim().toLowerCase(),pw=document.getElementById('p').value.trim();
+    var u=document.getElementById('u').value.trim(),pw=document.getElementById('p').value.trim();
     if(!u||!pw)return;
     b.disabled=true; b.textContent='⏳ Authenticating...'; s.textContent='';
     SanctuaryEngine.login(u,pw).then(function(result){
