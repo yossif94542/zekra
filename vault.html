@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <!-- Content Security Policy: Resolve CSP/CORB & eval blocks -->
@@ -742,14 +742,22 @@
         border-radius: var(--rad);
         padding: 10px 10px 12px 10px;
         will-change: transform;
-        transform: translateZ(0);
+        transform: translate3d(0, 0, 0);
         -webkit-backface-visibility: hidden;
         backface-visibility: hidden;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--card-shadow, 0 10px 25px rgba(0, 0, 0, 0.08));
         transform-origin: 50% 100%;
-        transition: transform 0.3s;
+        transition: var(--card-transition, transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1));
         cursor: grab;
         border: 1px solid #f3f4f6;
+        touch-action: pan-y !important;
+    }
+
+    .scard.moving,
+    .f-drag.actively-dragging {
+        transition: none !important;
+        cursor: grabbing !important;
+        touch-action: none !important;
     }
 
     /* --- HIGH-END MOBILE BOTTOM NAV --- */
@@ -4653,6 +4661,16 @@
                     <option value="'Why You Mad'">Why You Mad Custom Font 🔒</option>
                 </select>
 
+                                <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block tracking-widest">Photo Motion & Performance (ط³ط±ط¹ط© ظˆظ†ظ…ط· ط§ظ„ط­ط±ظƒط©)</label>
+                <select id="motion-style-select"
+                    class="w-full bg-gray-50 rounded-[20px] p-4 font-bold outline-none mb-6 shadow-sm"
+                    onchange="handleMotionSelect(this)">
+                    <option value="fast">âڑ، Ultra-Fast 60-120 FPS (ط®ظپظٹظپ ظˆظپط§ط¦ظ‚ ط§ظ„ط³ط±ط¹ط© ظ„ظ„ظ…ظˆط¨ط§ظٹظ„)</option>
+                    <option value="smooth">ًںŒ¸ Smooth & Floating (ط§ظ†ط³ظٹط§ط¨ظٹ ظ†ط§ط¹ظ…)</option>
+                    <option value="classic">ًںƒڈ Classic Tinder (ظƒظ„ط§ط³ظٹظƒظٹ)</option>
+                    <option value="lite">ًں“± Battery Saver (طھظˆظپظٹط± ط§ظ„ط¨ط·ط§ط±ظٹط© ظˆط§ظ„ط£ط¬ظ‡ط²ط© ط§ظ„ط¶ط¹ظٹظپط©)</option>
+                </select>
+
                 <button id="btn-sv-basics"
                     class="w-full bg-[#ff7096] text-white rounded-[30px] py-5 font-black uppercase text-[12px] shadow-lg active:scale-95 b-svadm">Save
                     Branding 🎨</button>
@@ -5413,27 +5431,53 @@
             // --- ZEKRA GLOBAL CORE 🛡️ ---
             window.parseStoryText = function(text) {
                 if (!text) return "";
-                let html = text;
+                let html = String(text);
+                
+                // 1. Stash all existing HTML tags to protect them from regex matching
+                const tags = [];
+                html = html.replace(/<[^>]+>/g, (m) => {
+                    tags.push(m);
+                    return `___ZKTAG_${tags.length - 1}___`;
+                });
+
+                // 2. Protect markdown tokens
                 const tokens = [];
                 const pt = (res) => {
                     tokens.push(res);
-                    return `__TKN${tokens.length - 1}__`;
+                    return `___ZKTKN_${tokens.length - 1}___`;
                 };
 
-                html = html.replace(/\*(.*?)\*/g, (m, p1) => pt(`<span class="uppercase text-pink-500 font-black">${p1}</span>`));
-                html = html.replace(/\((.*?)\)/g, (m, p1) => pt(`<span class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full inline-flex items-center gap-1 mx-1 shadow-sm"><i class="ri-heart-fill"></i> ${p1}</span>`));
-                html = html.replace(/-(.*?)-/g, (m, p1) => pt(`<span class="border-2 border-indigo-400 text-indigo-500 px-2 py-0.5 rounded-md mx-1 font-bold bg-indigo-50/50">${p1}</span>`));
-                html = html.replace(/~(.*?)~/g, (m, p1) => pt(`<span class="bg-yellow-200/50 text-yellow-700 px-1 rounded shadow-[0_0_10px_rgba(253,224,71,0.5)] mx-1">${p1}</span>`));
-                html = html.replace(/#([\w\u0600-\u06FF]+)/g, (m, p1) => pt(`<span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 font-bold">#${p1}</span>`));
-                html = html.replace(/\^(.*?)\^/g, (m, p1) => pt(`<span class="inline-block animate-bounce text-purple-600 font-black mx-1">${p1}</span>`));
-                
-                tokens.forEach((t, i) => {
-                    html = html.replace(`__TKN${i}__`, t);
+                // Bold: *text*
+                html = html.replace(/\*([^*\n\r]+)\*/g, (m, p1) => pt(`<span class="uppercase text-pink-500 font-black">${p1}</span>`));
+                // Heart: (text)
+                html = html.replace(/\(([^()\n\r]+)\)/g, (m, p1) => pt(`<span class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full inline-flex items-center gap-1 mx-1 shadow-sm"><i class="ri-heart-fill"></i> ${p1}</span>`));
+                // Highlight: ~text~
+                html = html.replace(/~([^~\n\r]+)~/g, (m, p1) => pt(`<span class="bg-yellow-200/50 text-yellow-700 px-1 rounded shadow-[0_0_10px_rgba(253,224,71,0.5)] mx-1">${p1}</span>`));
+                // Bounce: ^text^
+                html = html.replace(/\^([^\^\n\r]+)\^/g, (m, p1) => pt(`<span class="inline-block animate-bounce text-purple-600 font-black mx-1">${p1}</span>`));
+                // Hashtag: only words starting with a letter or arabic (not hex color codes like #fff or #5d2832)
+                html = html.replace(/(?:^|\s)#([a-zA-Z\u0600-\u06FF][\w\u0600-\u06FF]*)/g, (m, p1) => {
+                    return pt(` <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 font-bold">#${p1}</span>`);
                 });
 
-                html = html.replace(/\n/g, '<br>');
+                // Restore markdown tokens
+                tokens.forEach((t, i) => {
+                    html = html.replace(`___ZKTKN_${i}___`, t);
+                });
+
+                // 3. Restore all original HTML tags intact
+                tags.forEach((t, i) => {
+                    html = html.replace(`___ZKTAG_${i}___`, t);
+                });
+
+                // If input had no HTML tags originally, convert \n to <br>
+                if (tags.length === 0) {
+                    html = html.replace(/\n/g, '<br>');
+                }
+
                 return html;
             };
+
             const ordersRef = (typeof firebase !== 'undefined' && firebase.apps.length) ? firebase.database().ref('orders') : null;
             
             // ADVANCED PRESENCE TRACKING (slower heartbeat on mobile saves battery + bandwidth)
@@ -5580,32 +5624,70 @@
             // ★ FONT DROPDOWN FIX: Dynamically inject Google Font + apply to preview elements immediately
             window.handleFontSelect = function(selectEl, vaultKey, targetElId) {
                 const fontVal = selectEl.value;
-                // 1. Save to vaultState for both keys so every section shares the same font
-                vaultState['userNameFont'] = fontVal;
-                vaultState['bigFont'] = fontVal;
-                // 2. Apply fontFamily immediately to ALL text sections
-                const allTargets = ['ui-n', 'ui-msg', 'ui-story-text'];
-                allTargets.forEach(id => {
-                    const el = document.getElementById(id);
+                // 1. Save strictly to the targeted key
+                if (vaultKey) {
+                    vaultState[vaultKey] = fontVal;
+                }
+                // 2. Apply font directly to matching target
+                if (vaultKey === 'userNameFont') {
+                    const elN = document.getElementById('ui-n');
+                    if (elN) elN.style.fontFamily = fontVal;
+                } else if (vaultKey === 'bigFont') {
+                    const elMsg = document.getElementById('ui-msg');
+                    if (elMsg) elMsg.style.fontFamily = fontVal;
+                    const wInput = document.getElementById('welcome-msg-input');
+                    if (wInput) wInput.style.fontFamily = fontVal;
+                    const elStory = document.getElementById('ui-story-text');
+                    if (elStory) elStory.style.fontFamily = fontVal;
+                } else if (targetElId) {
+                    const el = document.getElementById(targetElId);
                     if (el) el.style.fontFamily = fontVal;
-                });
-                // 3. Dynamically load the Google Font stylesheet if not already loaded
-                // Strip quotes and extract the clean font name
+                }
+
+                // 3. Dynamically inject Google Font link if needed
                 const cleanName = fontVal.replace(/'/g, '').replace(/"/g, '');
                 const linkId = 'zk-font-' + cleanName.replace(/\s+/g, '-').toLowerCase();
-                if (!document.getElementById(linkId)) {
+                if (!document.getElementById(linkId) && !cleanName.includes('Why You Mad')) {
                     const link = document.createElement('link');
                     link.id = linkId;
                     link.rel = 'stylesheet';
-                    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(cleanName)}&display=swap`;
+                    link.href = 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(cleanName) + '&display=swap';
                     document.head.appendChild(link);
                 }
-                // 4. Save to localStorage/cloud
+
+                // 4. Save and sync
                 svDB();
                 pushToCloud();
             };
 
-            // GESTURE & IDENTITY MASTER ENGINE 🏎️
+            // Global motion switcher for mobile performance
+            window.handleMotionSelect = function(selectEl) {
+                const styleVal = selectEl ? selectEl.value : (vaultState.motionStyle || 'fast');
+                vaultState.motionStyle = styleVal;
+                applyMotionProfile(styleVal);
+                svDB();
+                pushToCloud();
+            };
+
+            window.applyMotionProfile = function(style) {
+                const s = style || vaultState.motionStyle || 'fast';
+                const root = document.documentElement;
+                if (s === 'fast') {
+                    root.style.setProperty('--card-transition', 'transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1)');
+                    root.style.setProperty('--card-shadow', '0 10px 25px rgba(0,0,0,0.08)');
+                } else if (s === 'smooth') {
+                    root.style.setProperty('--card-transition', 'transform 0.28s cubic-bezier(0.25, 1, 0.5, 1)');
+                    root.style.setProperty('--card-shadow', '0 20px 35px rgba(0,0,0,0.1)');
+                } else if (s === 'lite') {
+                    root.style.setProperty('--card-transition', 'transform 0.12s linear');
+                    root.style.setProperty('--card-shadow', 'none');
+                } else { // classic
+                    root.style.setProperty('--card-transition', 'transform 0.3s ease');
+                    root.style.setProperty('--card-shadow', '0 20px 40px rgba(0,0,0,0.1)');
+                }
+            };
+
+                        // GESTURE & IDENTITY MASTER ENGINE 🏎️
             const ref = (db, path) => db.ref(path);
             const onValue = (r, cb) => r.on('value', cb);
             const push = (r, data) => r.push(data);
@@ -5975,6 +6057,10 @@
                             uiBigMsg.onclick = () => openAdminSheet();
                             uiBigMsg.classList.add('cursor-pointer');
                         }
+                    }
+
+                    if (typeof applyMotionProfile === 'function') {
+                        applyMotionProfile(vaultState.motionStyle || 'fast');
                     }
 
                     // Live Music Style
@@ -6489,68 +6575,77 @@
             }
 
 
-            // TINDER MATH SCRIPT
+            // TINDER MATH SCRIPT (Optimized 60-120fps Mobile Engine)
             function bSwp() {
-                let cx = 0, tk = null, sx = 0, raf = null;
+                let cx = 0, tk = null, sx = 0, sy = 0, raf = null, isDragging = false;
                 const cs = document.querySelectorAll('.scard');
                 cs.forEach((el, i) => {
                     const r = (i % 2 === 0 ? 1 : -1) * ((i * 2) % 5 + 2);
                     el.dataset.r = r;
                     el.style.zIndex = i;
                     if (i === cs.length - 1) {
-                        el.style.transform = `scale(1) rotate(${r}deg)`;
+                        el.style.transform = "translate3d(0, 0, 0) scale(1) rotate(" + r + "deg)";
                         el.style.opacity = '1';
                     } else if (i === cs.length - 2) {
-                        el.style.transform = `scale(0.95) translateY(-20px) rotate(${r}deg)`;
+                        el.style.transform = "translate3d(0, -20px, 0) scale(0.95) rotate(" + r + "deg)";
                         el.style.opacity = '0.9';
                     } else {
-                        el.style.transform = `scale(0.9) translateY(-40px) rotate(${r}deg)`;
+                        el.style.transform = "translate3d(0, -40px, 0) scale(0.9) rotate(" + r + "deg)";
                         el.style.opacity = '0.7';
                     }
                     el.onpointerdown = e => {
                         if (i !== cs.length - 1) return;
                         tk = el;
+                        isDragging = true;
                         sx = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+                        sy = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
                         tk.classList.add('moving');
-                        document.onpointermove = dm;
-                        document.onpointerup = du;
+                        document.addEventListener('pointermove', dm, { passive: false });
+                        document.addEventListener('pointerup', du, { passive: true });
+                        document.addEventListener('pointercancel', du, { passive: true });
                     };
                 });
 
                 function dm(e) {
-                    if (!tk) return;
-                    cx = (e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0)) - sx;
+                    if (!tk || !isDragging) return;
+                    const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+                    cx = clientX - sx;
                     if (raf) cancelAnimationFrame(raf);
                     raf = requestAnimationFrame(() => {
-                        if (!tk) return;
-                        tk.style.transform = `translateX(${cx}px) rotate(${cx * 0.05 + parseFloat(tk.dataset.r)}deg)`;
+                        if (!tk || !isDragging) return;
+                        const r = parseFloat(tk.dataset.r || 0);
+                        tk.style.transform = "translate3d(" + cx + "px, 0, 0) rotate(" + (cx * 0.06 + r) + "deg)";
                     });
                 }
 
                 function du(e) {
                     if (!tk) return;
-                    document.onpointermove = document.onpointerup = null;
+                    isDragging = false;
+                    document.removeEventListener('pointermove', dm);
+                    document.removeEventListener('pointerup', du);
+                    document.removeEventListener('pointercancel', du);
                     if (raf) cancelAnimationFrame(raf);
                     tk.classList.remove('moving');
-                    if (Math.abs(cx) > 80) {
+                    if (Math.abs(cx) > 75) {
                         const d = cx > 0 ? 1 : -1;
-                        tk.style.transform = `translateX(${d * 250}px) rotate(${d * 50}deg)`;
-                        tk.style.opacity = 0;
-                        if (navigator.vibrate) navigator.vibrate(10);
+                        tk.style.transform = "translate3d(" + (d * 320) + "px, 0, 0) rotate(" + (d * 40) + "deg)";
+                        tk.style.opacity = '0';
+                        if (navigator.vibrate) navigator.vibrate(12);
                         const tt = tk; tk = null;
                         setTimeout(() => {
                             const pc = document.getElementById('swipe-c');
                             if (pc) pc.insertBefore(tt, pc.firstChild);
                             bSwp();
-                        }, 300);
+                        }, 200);
                     } else {
-                        tk.style.transform = `scale(1) rotate(${tk.dataset.r}deg)`;
+                        const r = parseFloat(tk.dataset.r || 0);
+                        tk.style.transform = "translate3d(0, 0, 0) scale(1) rotate(" + r + "deg)";
                         tk = null;
                     }
                 }
             }
 
-            // JS PHYSICS (Optimized Draggable)
+                        // JS PHYSICS (Optimized Draggable)
             function mkDrg(el) {
                 let d = false, ox = 0, oy = 0, raf = null;
                 el.onpointerdown = e => {
@@ -7365,6 +7460,8 @@
             }
 
             function openAdminSheet() {
+                const motionSel = document.getElementById('motion-style-select');
+                if (motionSel && vaultState.motionStyle) motionSel.value = vaultState.motionStyle;
                 const map = {
                     'vaultState-color': 'color', 'vaultState-c': 'c', 'vaultState-ig': 'ig', 'vaultState-tk': 'tk', 'vaultState-sp': 'sp', 'float-img-url': 'float',
                     'vaultState-a': 'a', 'vaultState-at': 'title', 'vaultState-aa': 'artist', 'music-lyrics-input': 'lyrics', 'spotify-widget-style': 'spotifyStyle',
@@ -7447,6 +7544,15 @@
                         if (typeof updateSoulUI === 'function') updateSoulUI();
                         if (typeof syncUI === 'function') syncUI();
                         if (btn.id === 'btn-sv-music' && typeof renderSmartPlayer === 'function') renderSmartPlayer(vaultState.a, vaultState.lyrics);
+                        if (btn.id === 'btn-sv-basics') {
+                            const elN = document.getElementById('ui-n');
+                            if (elN && vaultState.userNameFont) elN.style.fontFamily = vaultState.userNameFont;
+                            const elMsg = document.getElementById('ui-msg');
+                            if (elMsg) {
+                                if (vaultState.bigFont) elMsg.style.fontFamily = vaultState.bigFont;
+                                elMsg.innerHTML = window.parseStoryText(vaultState.longMessage || vaultState.dm_large || '');
+                            }
+                        }
 
                         console.log('✅ Saved locally & pushed to cloud.');
                         closeAdminPanel();
@@ -8989,7 +9095,7 @@
                                                 <i class="ri-delete-bin-line pointer-events-none"></i>
                                             </button>
                                             <button data-action="manageUser" data-user="${username}" class="bg-white/5 text-white/40 text-[9px] font-black uppercase px-4 py-2 rounded-xl hover:bg-white/10 transition-all border border-white/5 relative z-20">Manage</button>
-                                            <i class="ri-arrow-down-s-line text-gray-500 tree-icon-${username} transition-transform duration-300 pointer-events-none"></i>
+                                            <i id="tree-icon-${username}" class="ri-arrow-down-s-line text-gray-500 tree-icon-${username} transition-transform duration-300 pointer-events-none"></i>
                                         </div>
                                     </div>
                                     
@@ -9101,7 +9207,7 @@
 
             window.toggleUserTree = function(username) {
                 const content = document.getElementById(`tree-content-${username}`);
-                const icon = document.querySelector(`.tree-icon-${username}`);
+                const icon = document.getElementById(`tree-icon-${username}`) || (CSS.escape ? document.querySelector(`.tree-icon-${CSS.escape(username)}`) : null);
                 if (content) {
                     const isOpen = !content.classList.contains('hidden');
                     content.classList.toggle('hidden');
