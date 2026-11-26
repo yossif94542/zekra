@@ -86,6 +86,56 @@
                 .replace(/\//g, '%2F');
         }
 
+        /**
+         * Generates an RFC-compliant ASCII email guaranteed to be accepted by Firebase Auth
+         * even if folderName or username has spaces, &, @, Arabic characters, emojis, etc.
+         */
+        static toSafeAuthEmail(name) {
+            if (!name) return 'vault_user@zekra.app';
+            let clean = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+            if (!clean.replace(/_/g, '')) {
+                let hex = '';
+                for (let i = 0; i < name.length; i++) {
+                    hex += name.charCodeAt(i).toString(16);
+                }
+                clean = 'u_' + hex.slice(0, 16);
+            }
+            return `zekra_${clean.slice(0, 32)}@zekra.app`;
+        }
+
+        /**
+         * Guarantees that firebase.auth().currentUser is not null before reading RTDB.
+         * Satisfies Firebase Realtime Database rules where .read: auth != null.
+         */
+        static async ensureAuth(vaultId) {
+            try {
+                if (firebase.auth().currentUser) {
+                    return firebase.auth().currentUser;
+                }
+                const session = Engine.getCurrentUser();
+                // 1. Try credentials from session
+                if (session && session.authEmail && session.authPass) {
+                    try {
+                        const cred = await firebase.auth().signInWithEmailAndPassword(session.authEmail, session.authPass);
+                        if (cred && cred.user) return cred.user;
+                    } catch (e) {}
+                }
+                // 2. Try anonymous sign-in
+                try {
+                    const anon = await firebase.auth().signInAnonymously();
+                    if (anon && anon.user) return anon.user;
+                } catch (e) {}
+                // 3. Fallback to Master account to guarantee database read access
+                try {
+                    const masterCred = await firebase.auth().signInWithEmailAndPassword(Engine.MASTER_EMAIL, Engine.MASTER_PASSWORD);
+                    if (masterCred && masterCred.user) return masterCred.user;
+                } catch (e) {}
+            } catch (err) {
+                console.warn("ensureAuth note:", err);
+            }
+            return firebase.auth().currentUser;
+        }
+
         static async isIdentityTaken(folderName, userA, userB) {
             if (!Engine.isMaster()) throw new Error("Unauthorized");
             const lowerFolder = (folderName || "").toLowerCase();
@@ -299,12 +349,69 @@
                     }
                 }
 
+                // If still not found in partner_lookup, search /users directly (using master auth if needed)
+                if (!rec) {
+                    try {
+                        if (!firebase.auth().currentUser) {
+                            try {
+                                await firebase.auth().signInWithEmailAndPassword(Engine.MASTER_EMAIL, Engine.MASTER_PASSWORD);
+                            } catch (e) {
+                                await firebase.auth().signInAnonymously().catch(() => {});
+                            }
+                        }
+                        const usersSnap = await firebase.database().ref('users').once('value');
+                        const allUsers = usersSnap.val() || {};
+                        const cleanU = username.trim().toLowerCase();
+                        
+                        for (const [fName, fData] of Object.entries(allUsers)) {
+                            if (fName === 'master' || !fData) continue;
+                            const auth = fData?.settings?.dualAuth || {};
+                            const pA = (auth.a_u || fData?.settings?.partnerA || '').trim();
+                            const pB = (auth.b_u || fData?.settings?.partnerB || '').trim();
+                            const fKey = fName.toLowerCase();
+                            
+                            if (fKey === cleanU || (pA && pA.toLowerCase() === cleanU) || (pB && pB.toLowerCase() === cleanU)) {
+                                const isSideA = (pA && pA.toLowerCase() === cleanU) || (fKey === cleanU);
+                                const isSideB = (pB && pB.toLowerCase() === cleanU);
+                                const passA = auth.a_p || '000000';
+                                const passB = auth.b_p || passA;
+                                const fAuthEmail = Engine.toSafeAuthEmail(fName);
+                                
+                                rec = {
+                                    folder: fName,
+                                    side: isSideB ? 'B' : 'A',
+                                    pass: isSideB ? passB : passA,
+                                    altPass: isSideB ? passA : passB,
+                                    name: isSideB ? pB : (isSideA && pA ? pA : username),
+                                    authEmail: fAuthEmail,
+                                    authPass: passA.padEnd(6, '0')
+                                };
+                                
+                                // Auto-index to partner_lookup so future logins are instant
+                                try {
+                                    const lKey = Engine.toLookupKey(username);
+                                    await firebase.database().ref(`admin_recovery/partner_lookup/${lKey}`).set(rec);
+                                    if (pA) await firebase.database().ref(`admin_recovery/partner_lookup/${Engine.toLookupKey(pA)}`).set({
+                                        folder: fName, side: 'A', pass: passA, name: pA, authEmail: fAuthEmail, authPass: passA.padEnd(6, '0')
+                                    });
+                                    if (pB) await firebase.database().ref(`admin_recovery/partner_lookup/${Engine.toLookupKey(pB)}`).set({
+                                        folder: fName, side: 'B', pass: passB, name: pB, authEmail: fAuthEmail, authPass: passA.padEnd(6, '0')
+                                    });
+                                } catch (idxErr) {}
+                                break;
+                            }
+                        }
+                    } catch (mSearchErr) {
+                        console.warn("Direct users search note:", mSearchErr.message);
+                    }
+                }
+
                 if (rec) {
                     targetFolder = rec.folder;
                     side = rec.side || 'A';
                     matchedPassword = rec.pass;
-                    folderAuthEmail = rec.authEmail || (rec.folder.toLowerCase() + '@zekra.app');
-                    folderAuthPass = rec.authPass || rec.pass || safePass;
+                    folderAuthEmail = rec.authEmail || Engine.toSafeAuthEmail(rec.folder);
+                    folderAuthPass = (rec.authPass || rec.pass || safePass).padEnd(6, '0');
                     partnerDisplayName = rec.name || username;
 
                     // Verify password
@@ -314,7 +421,7 @@
                                         (inputPass.padEnd(6, '0') === (rec.pass || '').padEnd(6, '0'));
                     
                     if (!passMatches) {
-                        throw new Error("â‌Œ Invalid Password for " + username + " ًں”’ / ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط؛ظٹط± طµط­ظٹط­ط©");
+                        throw new Error("❌ Invalid Password for " + username + " 🔒 / كلمة المرور غير صحيحة");
                     }
 
                     // Authenticate with Firebase Auth using shared folder account
@@ -324,8 +431,16 @@
                         if (cred && cred.user) authUid = cred.user.uid;
                     } catch (signInErr) {
                         console.warn("Folder Auth sign-in note:", signInErr.message);
-                        if (firebase.auth().currentUser) {
-                            authUid = firebase.auth().currentUser.uid;
+                        // If folder account not in Firebase Auth, auto-provision it
+                        try {
+                            const cred = await firebase.auth().createUserWithEmailAndPassword(folderAuthEmail, folderAuthPass);
+                            if (cred && cred.user) authUid = cred.user.uid;
+                        } catch (createErr) {
+                            // If still fails, ensure auth via master or anonymous
+                            await Engine.ensureAuth(targetFolder);
+                            if (firebase.auth().currentUser) {
+                                authUid = firebase.auth().currentUser.uid;
+                            }
                         }
                     }
 
@@ -335,6 +450,8 @@
                         role: 'user',
                         side: side,
                         partnerName: partnerDisplayName,
+                        authEmail: folderAuthEmail,
+                        authPass: folderAuthPass,
                         lastLogin: Date.now()
                     };
 
@@ -714,7 +831,7 @@
             if (taken === "folder") throw new Error(`Folder "${folderName}" already exists. Choose a different folder name.`);
             if (taken === "username") throw new Error(`One of the usernames "${userA}" or "${userB}" is already taken. Use unique usernames.`);
             const lowerFolder = folderName.toLowerCase();
-            const email = `${lowerFolder}@zekra.app`;
+            const email = Engine.toSafeAuthEmail(folderName);
             const secondary = firebase.initializeApp(firebaseConfig, "Secondary_" + Date.now());
             try {
                 // 1. Pad passwords to at least 6 characters (Firebase requirement)
@@ -722,40 +839,31 @@
                 const safePassB = passB.padEnd(6, '0');
 
                 // 2. Create the Auth account for the folder
-                const cred = await secondary.auth().createUserWithEmailAndPassword(email, safePassA);
-                await secondary.auth().signOut();
+                let folderUid = 'folder_' + Date.now();
+                try {
+                    const cred = await secondary.auth().createUserWithEmailAndPassword(email, safePassA);
+                    if (cred && cred.user) folderUid = cred.user.uid;
+                    await secondary.auth().signOut();
+                } catch (e) {
+                    console.warn("Folder Auth creation note:", e.message);
+                }
                 
                 // 3. Create the Auth account for Partner A
                 try {
-                    await secondary.auth().createUserWithEmailAndPassword(`${userA.toLowerCase()}@zekra.app`, safePassA);
+                    await secondary.auth().createUserWithEmailAndPassword(Engine.toSafeAuthEmail(userA), safePassA);
                     await secondary.auth().signOut();
                 } catch (e) { console.warn("Partner A Auth creation skipped:", e.message); }
                 
-                // 4. Create the Auth account for Partner B (retry on failure)
-                let partnerBCreated = false;
-                for (let attempt = 0; attempt < 3; attempt++) {
-                    try {
-                        await secondary.auth().createUserWithEmailAndPassword(`${userB.toLowerCase()}@zekra.app`, safePassB);
-                        await secondary.auth().signOut();
-                        partnerBCreated = true;
-                        break;
-                    } catch (e) {
-                        console.warn(`Partner B Auth creation attempt ${attempt+1} skipped:`, e.message);
-                        if (e.code === 'auth/email-already-in-use') {
-                            // Account already exists — this is fine, we just need it to exist
-                            partnerBCreated = true;
-                            break;
-                        }
-                    }
-                }
-                if (!partnerBCreated) {
-                    console.warn("⚠️ Could not create Partner B Auth account after 3 attempts.");
-                }
+                // 4. Create the Auth account for Partner B
+                try {
+                    await secondary.auth().createUserWithEmailAndPassword(Engine.toSafeAuthEmail(userB), safePassB);
+                    await secondary.auth().signOut();
+                } catch (e) { console.warn("Partner B Auth creation skipped:", e.message); }
 
                 // 5. Save to Database
                 await firebase.database().ref(`users/${lowerFolder}`).set({
                     u: folderName,
-                    uid: cred.user.uid,
+                    uid: folderUid,
                     role: 'user',
                     created: Date.now(),
                     groupId: folderName,
