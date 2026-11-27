@@ -6345,7 +6345,11 @@
                     setTimeout(buildUI, midnight - new Date() + 1000);
 
                     // Reordering
-                    Object.keys(vaultState.o).forEach(k => { const s = document.getElementById('sec-' + k); if (s) s.style.order = vaultState.o[k]; });
+                    if (typeof window.applySectionOrder === 'function') {
+                        window.applySectionOrder(vaultState.sectionOrder);
+                    } else if (vaultState.o) {
+                        Object.keys(vaultState.o).forEach(k => { const s = document.getElementById('sec-' + k); if (s) s.style.order = vaultState.o[k]; });
+                    }
 
                     // Swipe Flush
                     const sc = document.getElementById('swipe-c');
@@ -7615,7 +7619,11 @@
                     document.querySelectorAll('.t-btn').forEach(x => x.classList.remove('t-act'));
                     document.querySelectorAll('.t-pan').forEach(x => x.classList.remove('p-act'));
                     b.classList.add('t-act');
-                    document.getElementById('tp-' + b.dataset.t).classList.add('p-act');
+                    const targetPan = document.getElementById('tp-' + b.dataset.t);
+                    if (targetPan) targetPan.classList.add('p-act');
+                    if (b.dataset.t === 'order' && typeof window.renderSectionOrderAdminUI === 'function') {
+                        window.renderSectionOrderAdminUI(true);
+                    }
                 };
             });
 
@@ -7658,7 +7666,7 @@
                     else if (el.contentEditable === 'true') el.innerHTML = vaultState[map[id]] || '';
                     else el.value = vaultState[map[id]] || '';
                 });
-                if (typeof renderSectionOrderAdminUI === 'function') renderSectionOrderAdminUI();
+                if (typeof renderSectionOrderAdminUI === 'function') renderSectionOrderAdminUI(true);
                 const ap = document.getElementById('admin-panel');
                 if (ap) {
                     if (!document.body.classList.contains('scroll-locked')) {
@@ -11154,41 +11162,57 @@
         const DEFAULT_SECTION_ORDER = ['msc', 'gal', 'stt', 'qts', 'vibe', 'notes', 'memory', 'first_date'];
 
         window.getCurrentSectionOrder = function() {
+            let order = null;
             if (window.vaultState && Array.isArray(window.vaultState.sectionOrder) && window.vaultState.sectionOrder.length) {
-                return [...window.vaultState.sectionOrder];
+                order = [...window.vaultState.sectionOrder];
+            } else {
+                const cardId = (typeof SanctuaryEngine !== 'undefined' ? SanctuaryEngine.getActiveUID() : null) || window.currentUser || 'global';
+                try {
+                    const local = localStorage.getItem('zekra_section_order_' + cardId) || localStorage.getItem('zekra_section_order');
+                    if (local) {
+                        const parsed = JSON.parse(local);
+                        if (Array.isArray(parsed) && parsed.length) order = parsed;
+                    }
+                } catch(e) {}
             }
-            const cardId = (typeof SanctuaryEngine !== 'undefined' ? SanctuaryEngine.getActiveUID() : null) || window.currentUser || 'global';
-            try {
-                const local = localStorage.getItem('zekra_section_order_' + cardId) || localStorage.getItem('zekra_section_order');
-                if (local) {
-                    const parsed = JSON.parse(local);
-                    if (Array.isArray(parsed) && parsed.length) return parsed;
-                }
-            } catch(e) {}
-            return [...DEFAULT_SECTION_ORDER];
+            if (!order || !order.length) order = [...DEFAULT_SECTION_ORDER];
+            // Ensure all 8 default keys are included
+            DEFAULT_SECTION_ORDER.forEach(k => {
+                if (!order.includes(k)) order.push(k);
+            });
+            return order;
         };
 
         window.applySectionOrder = function(orderList) {
             const dZone = document.getElementById('d-zone');
             if (!dZone) return;
             const order = (Array.isArray(orderList) && orderList.length) ? orderList : window.getCurrentSectionOrder();
-
-            order.forEach(k => {
-                const sec = dZone.querySelector(`[data-k="${k}"]`);
-                if (sec) dZone.appendChild(sec);
-            });
+            const fullList = [...order];
             DEFAULT_SECTION_ORDER.forEach(k => {
+                if (!fullList.includes(k)) fullList.push(k);
+            });
+
+            fullList.forEach((k, idx) => {
                 const sec = dZone.querySelector(`[data-k="${k}"]`);
-                if (sec && !order.includes(k)) dZone.appendChild(sec);
+                if (sec) {
+                    sec.style.order = (idx + 1).toString();
+                    dZone.appendChild(sec);
+                    if (window.vaultState) {
+                        if (!window.vaultState.o) window.vaultState.o = {};
+                        window.vaultState.o[k] = idx + 1;
+                    }
+                }
             });
         };
 
-        let tempSectionOrder = [...DEFAULT_SECTION_ORDER];
+        let tempSectionOrder = [];
 
-        window.renderSectionOrderAdminUI = function() {
+        window.renderSectionOrderAdminUI = function(fromSaved = false) {
             const container = document.getElementById('admin-section-order-list');
             if (!container) return;
-            tempSectionOrder = window.getCurrentSectionOrder();
+            if (fromSaved || !tempSectionOrder || !tempSectionOrder.length) {
+                tempSectionOrder = window.getCurrentSectionOrder();
+            }
 
             container.innerHTML = '';
             tempSectionOrder.forEach((k, idx) => {
@@ -11197,7 +11221,7 @@
                 const isLast = idx === tempSectionOrder.length - 1;
 
                 const row = document.createElement('div');
-                row.className = 'flex items-center justify-between p-3.5 bg-gray-50 hover:bg-pink-50/50 rounded-[20px] border border-gray-100 transition-all';
+                row.className = 'flex items-center justify-between p-3.5 bg-gray-50 hover:bg-pink-50/50 rounded-[20px] border border-gray-100 transition-all shadow-xs';
                 row.innerHTML = `
                     <div class="flex items-center gap-3">
                         <span class="w-6 h-6 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-black font-quicksand">
@@ -11211,12 +11235,12 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1.5">
-                        <button type="button" onclick="moveSectionOrder(${idx}, -1)" ${isFirst ? 'disabled' : ''}
-                            class="w-8 h-8 rounded-full flex items-center justify-center border text-xs font-bold transition-all ${isFirst ? 'opacity-30 border-gray-200 text-gray-300 cursor-not-allowed' : 'bg-white hover:bg-pink-100 border-gray-200 text-gray-700 shadow-xs active:scale-90'}">
+                        <button type="button" onclick="window.moveSectionOrder(${idx}, -1)" ${isFirst ? 'disabled' : ''}
+                            class="w-8 h-8 rounded-full flex items-center justify-center border text-xs font-bold transition-all ${isFirst ? 'opacity-30 border-gray-200 text-gray-300 cursor-not-allowed' : 'bg-white hover:bg-pink-100 border-gray-200 text-gray-700 shadow-xs active:scale-90 cursor-pointer'}">
                             ▲
                         </button>
-                        <button type="button" onclick="moveSectionOrder(${idx}, 1)" ${isLast ? 'disabled' : ''}
-                            class="w-8 h-8 rounded-full flex items-center justify-center border text-xs font-bold transition-all ${isLast ? 'opacity-30 border-gray-200 text-gray-300 cursor-not-allowed' : 'bg-white hover:bg-pink-100 border-gray-200 text-gray-700 shadow-xs active:scale-90'}">
+                        <button type="button" onclick="window.moveSectionOrder(${idx}, 1)" ${isLast ? 'disabled' : ''}
+                            class="w-8 h-8 rounded-full flex items-center justify-center border text-xs font-bold transition-all ${isLast ? 'opacity-30 border-gray-200 text-gray-300 cursor-not-allowed' : 'bg-white hover:bg-pink-100 border-gray-200 text-gray-700 shadow-xs active:scale-90 cursor-pointer'}">
                             ▼
                         </button>
                     </div>
@@ -11232,30 +11256,38 @@
             tempSectionOrder[index] = tempSectionOrder[newIndex];
             tempSectionOrder[newIndex] = temp;
             
-            // Re-render UI list
-            window.renderSectionOrderAdminUI();
+            // Re-render UI list showing swapped order
+            window.renderSectionOrderAdminUI(false);
+            // Apply live preview to dZone immediately
+            window.applySectionOrder(tempSectionOrder);
             if (navigator.vibrate) navigator.vibrate(10);
         };
 
         window.saveSectionOrder = async function() {
-            if (window.vaultState) window.vaultState.sectionOrder = [...tempSectionOrder];
+            if (!Array.isArray(tempSectionOrder) || !tempSectionOrder.length) return;
+            const newOrder = [...tempSectionOrder];
+            if (window.vaultState) {
+                window.vaultState.sectionOrder = [...newOrder];
+                if (!window.vaultState.o) window.vaultState.o = {};
+                newOrder.forEach((k, idx) => { window.vaultState.o[k] = idx + 1; });
+            }
             const cardId = (typeof SanctuaryEngine !== 'undefined' ? SanctuaryEngine.getActiveUID() : null) || window.currentUser || 'global';
             
             // 1. Save locally
             try {
-                localStorage.setItem('zekra_section_order_' + cardId, JSON.stringify(tempSectionOrder));
-                localStorage.setItem('zekra_section_order', JSON.stringify(tempSectionOrder));
+                localStorage.setItem('zekra_section_order_' + cardId, JSON.stringify(newOrder));
+                localStorage.setItem('zekra_section_order', JSON.stringify(newOrder));
             } catch(e) {}
             if (typeof svDB === 'function') svDB();
 
             // 2. Apply instantly to DOM
-            window.applySectionOrder(tempSectionOrder);
+            window.applySectionOrder(newOrder);
 
             // 3. Save to Firebase
             if (window.firebaseData) {
                 try {
-                    await window.firebaseData.ref(`cards/${cardId}/section_order`).set(tempSectionOrder);
-                    await window.firebaseData.ref(`users/${cardId}/settings/section_order`).set(tempSectionOrder);
+                    await window.firebaseData.ref(`cards/${cardId}/section_order`).set(newOrder);
+                    await window.firebaseData.ref(`users/${cardId}/settings/section_order`).set(newOrder);
                 } catch(e) {
                     console.warn("Section order cloud save note:", e.message);
                 }
@@ -11268,6 +11300,7 @@
         window.resetSectionOrder = function() {
             if (!confirm("هل تريد استعادة الترتيب الافتراضي لجميع الأقسام؟")) return;
             tempSectionOrder = [...DEFAULT_SECTION_ORDER];
+            window.renderSectionOrderAdminUI(false);
             window.saveSectionOrder();
         };
 
@@ -11278,6 +11311,7 @@
                 const order = snap.val();
                 if (order && Array.isArray(order) && order.length) {
                     if (window.vaultState) window.vaultState.sectionOrder = order;
+                    tempSectionOrder = [...order];
                     window.applySectionOrder(order);
                 }
             });
@@ -11285,6 +11319,7 @@
                 const order = snap.val();
                 if (order && Array.isArray(order) && order.length) {
                     if (window.vaultState) window.vaultState.sectionOrder = order;
+                    tempSectionOrder = [...order];
                     window.applySectionOrder(order);
                 }
             });
@@ -11299,7 +11334,7 @@
             initPlansListener();
             initSectionOrderListener();
             window.applySectionOrder();
-            window.renderSectionOrderAdminUI();
+            window.renderSectionOrderAdminUI(true);
         });
 
         // Hook after buildUI runs
